@@ -12,7 +12,6 @@ import { type KindeTokenClaims } from "@repo/auth";
 import type {
   User,
   UserIdentity,
-  VUser,
   VMembership,
   CreateUserInput,
 } from "./types";
@@ -295,3 +294,4 @@ function formatName(
   const parts = [givenName, familyName].filter(Boolean);
   return parts.length > 0 ? parts.join(" ") : undefined;
 }
+

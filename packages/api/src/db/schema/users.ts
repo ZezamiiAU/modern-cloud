@@ -7,7 +7,6 @@
 
 import {
   pgSchema,
-  pgTable,
   uuid,
   text,
   boolean,
@@ -84,3 +83,4 @@ export const userIdentitiesRelations = relations(userIdentities, ({ one }) => ({
     references: [users.id],
   }),
 }));
+

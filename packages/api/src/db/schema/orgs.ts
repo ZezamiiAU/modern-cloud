@@ -75,7 +75,7 @@ export const memberships = coreSchema.table(
 // RELATIONS
 // =============================================================================
 
-export const orgRefsRelations = relations(orgRefs, ({ many, one }) => ({
+export const orgRefsRelations = relations(orgRefs, ({ many, one: _one }) => ({
   memberships: many(memberships),
 }));
 

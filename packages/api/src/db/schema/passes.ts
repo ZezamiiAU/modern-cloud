@@ -19,6 +19,7 @@ import { coreSchema, users } from "./users";
 import { orgRefs } from "./orgs";
 import { siteRefs } from "./sites";
 import { deviceRefs } from "./refs";
+import { passTypes } from "./pass-types";
 
 // =============================================================================
 // PASS TYPES
@@ -45,6 +46,9 @@ export const passes = coreSchema.table(
       .notNull()
       .references(() => orgRefs.id, { onDelete: "cascade" }),
     siteRefId: uuid("site_ref_id").references(() => siteRefs.id),
+    passTypeId: uuid("pass_type_id")
+      .notNull()
+      .references(() => passTypes.id, { onDelete: "restrict" }),
     userId: uuid("user_id").references(() => users.id),
     code: text("code").notNull(),
     passType: text("pass_type").notNull().$type<PassType>(),
@@ -53,6 +57,9 @@ export const passes = coreSchema.table(
     validTo: timestamp("valid_to", { withTimezone: true }),
     visitorName: text("visitor_name"),
     visitorEmail: text("visitor_email"),
+    visitorPhone: text("visitor_phone"),
+    vehiclePlate: text("vehicle_plate"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
     hostUserId: uuid("host_user_id").references(() => users.id),
     metadata: jsonb("metadata").default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -67,6 +74,7 @@ export const passes = coreSchema.table(
     index("idx_passes_site").on(table.siteRefId),
     index("idx_passes_user").on(table.userId),
     index("idx_passes_code").on(table.orgRefId, table.code),
+    index("idx_passes_stripe_intent").on(table.stripePaymentIntentId),
     check("chk_pass_type", sql`${table.passType} IN ('visitor', 'contractor', 'delivery', 'event')`),
     check("chk_pass_status", sql`${table.status} IN ('pending', 'active', 'expired', 'revoked')`),
   ]
@@ -108,6 +116,10 @@ export const passesRelations = relations(passes, ({ one, many }) => ({
   site: one(siteRefs, {
     fields: [passes.siteRefId],
     references: [siteRefs.id],
+  }),
+  passTypeConfig: one(passTypes, {
+    fields: [passes.passTypeId],
+    references: [passTypes.id],
   }),
   user: one(users, {
     fields: [passes.userId],

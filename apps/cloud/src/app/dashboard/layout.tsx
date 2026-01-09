@@ -2,22 +2,23 @@
  * Dashboard Layout - Server Component
  *
  * Fetches user from Kinde server-side.
- * Passes serializable config to PageShell.
+ * Uses new ZezamiiSidebar for multi-product navigation.
  */
 
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { PageShell, type NavItem } from "@repo/ui";
+import { SidebarWrapper } from "@/components/sidebar-wrapper";
+import { HeaderWrapper } from "@/components/header-wrapper";
+import { unstable_cache } from "next/cache";
 
-const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Overview", icon: "dashboard" },
-  { href: "/dashboard/sites", label: "Sites", icon: "building" },
-  { href: "/dashboard/spaces", label: "Spaces", icon: "grid" },
-  { href: "/dashboard/devices", label: "Devices", icon: "cpu" },
-  { href: "/dashboard/people", label: "People", icon: "users" },
-  { href: "/dashboard/passes", label: "Access / Passes", icon: "key" },
-  { href: "/dashboard/events", label: "Events / Audit", icon: "activity" },
-  { href: "/dashboard/settings", label: "Settings", icon: "settings" },
-];
+// Cache user session for 60 seconds to speed up navigation
+const getCachedUser = unstable_cache(
+  async () => {
+    const { getUser } = getKindeServerSession();
+    return await getUser();
+  },
+  ["user-session"],
+  { revalidate: 60 }
+);
 
 export default async function DashboardLayout({
   children,
@@ -25,8 +26,7 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   // Get user from Kinde server-side
-  const { getUser } = getKindeServerSession();
-  const kindeUser = await getUser();
+  const kindeUser = await getCachedUser();
 
   // Transform to serializable user object
   const user = kindeUser
@@ -42,14 +42,19 @@ export default async function DashboardLayout({
       };
 
   return (
-    <PageShell
-      title="Zezamii"
-      subtitle="Admin Portal"
-      navItems={navItems}
-      user={user}
-    >
-      {children}
-    </PageShell>
+    <div className="min-h-screen flex bg-gray-50">
+      {/* Zezamii Multi-Product Sidebar */}
+      <SidebarWrapper user={user} />
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Unified Header */}
+        <HeaderWrapper user={user} />
+
+        {/* Content */}
+        <main className="flex-1 p-6 overflow-auto">{children}</main>
+      </div>
+    </div>
   );
 }
 

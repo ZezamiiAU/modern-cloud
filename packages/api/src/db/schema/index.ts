@@ -48,6 +48,12 @@ export {
   deviceRefsRelations,
 } from "./refs";
 
+// Pass Types (site-specific configuration)
+export {
+  passTypes,
+  passTypesRelations,
+} from "./pass-types";
+
 // Passes (new capability)
 export {
   passes,

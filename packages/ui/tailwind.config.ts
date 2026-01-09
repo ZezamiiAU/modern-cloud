@@ -51,6 +51,30 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
+        access: {
+          DEFAULT: "hsl(var(--access))",
+          foreground: "hsl(var(--access-foreground))",
+        },
+        lockers: {
+          DEFAULT: "hsl(var(--lockers))",
+          foreground: "hsl(var(--lockers-foreground))",
+        },
+        rooms: {
+          DEFAULT: "hsl(var(--rooms))",
+          foreground: "hsl(var(--rooms-foreground))",
+        },
+        bookings: {
+          DEFAULT: "hsl(var(--bookings))",
+          foreground: "hsl(var(--bookings-foreground))",
+        },
+        vision: {
+          DEFAULT: "hsl(var(--vision))",
+          foreground: "hsl(var(--vision-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

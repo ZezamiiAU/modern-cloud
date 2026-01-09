@@ -1,0 +1,15 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <defs>
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2563eb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded square background -->
+  <rect width="36" height="36" rx="8" fill="url(#cloudGradient)"/>
+
+  <!-- Cloud icon -->
+  <path d="M26 22.5c1.1 0 2-.9 2-2 0-1-.75-1.85-1.7-1.98C26.1 16.95 24.35 16 22.5 16c-1.4 0-2.65.6-3.5 1.55C18.4 17.2 17.7 17 17 17c-2.2 0-4 1.8-4 4s1.8 4 4 4h9z" fill="white"/>
+</svg>

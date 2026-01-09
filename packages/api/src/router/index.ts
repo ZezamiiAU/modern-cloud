@@ -11,6 +11,7 @@ import { publicRouter } from "./public";
 import { daypassRouter } from "./daypass";
 import { eventsRouter } from "./events";
 import { legacyRouter } from "./legacy";
+import { adminRouter } from "./admin";
 
 /**
  * Main application router
@@ -22,6 +23,7 @@ export const appRouter = createRouter({
   daypass: daypassRouter,
   events: eventsRouter,
   legacy: legacyRouter,
+  admin: adminRouter,
 });
 
 /**

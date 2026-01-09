@@ -7,19 +7,20 @@
 
 import { type InferSelectModel, type InferInsertModel } from "drizzle-orm";
 import {
-  users,
-  userIdentities,
-  orgRefs,
-  memberships,
-  siteMemberships,
-  siteRefs,
-  buildingRefs,
-  deviceRefs,
-  slugHistory,
-  orgSettings,
-  auditLog,
-  passes,
-  passEvents,
+  type users,
+  type userIdentities,
+  type orgRefs,
+  type memberships,
+  type siteMemberships,
+  type siteRefs,
+  type buildingRefs,
+  type deviceRefs,
+  type slugHistory,
+  type orgSettings,
+  type auditLog,
+  type passTypes,
+  type passes,
+  type passEvents,
 } from "./schema";
 
 // Re-export enum types from schema
@@ -47,6 +48,7 @@ export type DeviceRef = InferSelectModel<typeof deviceRefs>;
 export type SlugHistory = InferSelectModel<typeof slugHistory>;
 export type OrgSettings = InferSelectModel<typeof orgSettings>;
 export type AuditLog = InferSelectModel<typeof auditLog>;
+export type PassTypeConfig = InferSelectModel<typeof passTypes>;
 export type Pass = InferSelectModel<typeof passes>;
 export type PassEvent = InferSelectModel<typeof passEvents>;
 
@@ -65,6 +67,7 @@ export type CreateDeviceRefInput = InferInsertModel<typeof deviceRefs>;
 export type CreateSlugHistoryInput = InferInsertModel<typeof slugHistory>;
 export type CreateOrgSettingsInput = InferInsertModel<typeof orgSettings>;
 export type CreateAuditLogInput = InferInsertModel<typeof auditLog>;
+export type CreatePassTypeInput = InferInsertModel<typeof passTypes>;
 export type CreatePassInput = InferInsertModel<typeof passes>;
 export type CreatePassEventInput = InferInsertModel<typeof passEvents>;
 
