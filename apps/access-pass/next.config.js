@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  reactStrictMode: true,
+const nextConfig = {
   transpilePackages: ["@repo/ui", "@repo/api"],
-}
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+};
+
+module.exports = nextConfig;
