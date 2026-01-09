@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui"
 import { Button } from "@repo/ui"
@@ -9,7 +9,7 @@ import { trpc } from "@/lib/trpc"
 import { format } from "date-fns"
 import { MessageSquare, Wallet } from "lucide-react"
 
-export default function SuccessPage() {
+function SuccessPageContent() {
   const searchParams = useSearchParams()
   const paymentIntentId = searchParams.get("payment_intent")
 
@@ -258,3 +258,20 @@ Enter this PIN at the keypad to access.`
     </main>
   )
 }
+
+
+export default function SuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+          <p>Loading your pass...</p>
+        </div>
+      </div>
+    }>
+      <SuccessPageContent />
+    </Suspense>
+  )
+}
+
