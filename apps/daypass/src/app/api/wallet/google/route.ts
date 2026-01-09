@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { type NextRequest, NextResponse } from "next/server"
 import * as jose from "jose"
 
@@ -248,3 +250,4 @@ export async function GET(req: NextRequest) {
     )
   }
 }
+
