@@ -158,29 +158,15 @@ export function QRGenerator() {
   };
 
   useEffect(() => {
-    if (selectedDevice) {
-      generateQRCode(selectedDevice);
-    }
-  }, [selectedDevice, qrSettings, pwaBaseUrl, generateQRCode]);
-
-  useEffect(() => {
-    if (qrCode && qrRef.current) {
-      qrRef.current.innerHTML = "";
-      qrCode.append(qrRef.current);
-    }
-  }, [qrCode]);
-
-  // Monitor when QRCodeStyling is loaded and regenerate if needed
-  useEffect(() => {
     const checkLibraryLoaded = setInterval(() => {
       if (QRCodeStyling && selectedDevice && !qrCode) {
         generateQRCode(selectedDevice);
         clearInterval(checkLibraryLoaded);
       }
     }, 100);
-
     return () => clearInterval(checkLibraryLoaded);
-  }, [selectedDevice, qrCode, generateQRCode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDevice, qrCode]);
 
   return (
     <div className="flex h-[calc(100vh-20rem)] gap-6">
@@ -447,3 +433,4 @@ export function QRGenerator() {
     </div>
   );
 }
+

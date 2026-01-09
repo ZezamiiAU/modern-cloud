@@ -118,7 +118,8 @@ export function QRGeneratorClient() {
     if (selectedDevice) {
       generateQRCode(selectedDevice)
     }
-  }, [selectedDevice, qrSettings, pwaBaseUrl])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDevice, qrSettings.size, qrSettings.errorCorrection, pwaBaseUrl])
 
   useEffect(() => {
     if (qrCode && qrRef.current) {
@@ -398,3 +399,4 @@ export function QRGeneratorClient() {
     </div>
   )
 }
+
