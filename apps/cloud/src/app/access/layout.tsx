@@ -1,28 +1,20 @@
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { HeaderWrapper } from "@/components/header-wrapper";
-import { unstable_cache } from "next/cache";
-
-// Cache user session for 60 seconds to speed up navigation
-const getCachedUser = unstable_cache(
-  async () => {
-    const { getUser } = getKindeServerSession();
-    return await getUser();
-  },
-  ["user-session"],
-  { revalidate: 60 }
-);
 
 export default async function AccessLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const kindeUser = await getCachedUser();
+  const { getUser } = getKindeServerSession();
+  const kindeUser = await getUser();
 
   const user = kindeUser
     ? {
-        name: `${kindeUser.given_name || ""} ${kindeUser.family_name || ""}`.trim() || "User",
+        name:
+          `${kindeUser.given_name || ""} ${kindeUser.family_name || ""}`.trim() ||
+          "User",
         email: kindeUser.email || "",
         initials: getInitials(kindeUser.given_name, kindeUser.family_name),
       }
@@ -43,7 +35,10 @@ export default async function AccessLayout({
   );
 }
 
-function getInitials(firstName?: string | null, lastName?: string | null): string {
+function getInitials(
+  firstName?: string | null,
+  lastName?: string | null,
+): string {
   const first = firstName?.charAt(0)?.toUpperCase() || "";
   const last = lastName?.charAt(0)?.toUpperCase() || "";
   return first + last || "?";
