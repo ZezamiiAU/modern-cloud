@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import type { Card, CardContent } from "@repo/ui";
+import { Card, CardContent } from "./ui/card";
 
 interface ComingSoonProps {
   productName: string;
