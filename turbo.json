@@ -1,6 +1,17 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": [
+    "KINDE_CLIENT_ID",
+    "KINDE_CLIENT_SECRET",
+    "KINDE_ISSUER_URL",
+    "KINDE_SITE_URL",
+    "KINDE_POST_LOGOUT_REDIRECT_URL",
+    "KINDE_POST_LOGIN_REDIRECT_URL",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "DATABASE_URL"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
