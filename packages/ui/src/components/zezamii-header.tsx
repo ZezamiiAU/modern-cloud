@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Search, Zap, HelpCircle, ChevronDown, TrendingUp, Building2 } from "lucide-react";
+import {
+  Search,
+  Zap,
+  HelpCircle,
+  ChevronDown,
+  TrendingUp,
+  Building2,
+} from "lucide-react";
 import { cn } from "../lib/utils";
 
 export interface HealthPill {
@@ -27,7 +34,7 @@ export function ZezamiiHeader({
   healthPills = [],
   onSearch,
   organizationName = "Organization",
-  _userName = "User",
+  userName: _userName = "User",
   onOrganizationChange,
   className,
 }: ZezamiiHeaderProps) {
@@ -69,7 +76,7 @@ export function ZezamiiHeader({
       className={cn(
         "h-14 flex items-center justify-between px-6 border-b border-gray-200",
         "backdrop-blur-md bg-white/80",
-        className
+        className,
       )}
     >
       {/* Left Section: Breadcrumbs + Health Pills */}
@@ -88,7 +95,9 @@ export function ZezamiiHeader({
                     {crumb.label}
                   </a>
                 ) : (
-                  <span className="text-gray-900 font-medium">{crumb.label}</span>
+                  <span className="text-gray-900 font-medium">
+                    {crumb.label}
+                  </span>
                 )}
               </React.Fragment>
             ))}
@@ -103,9 +112,15 @@ export function ZezamiiHeader({
                 key={pill.id}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100/80 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
               >
-                <div className={cn("w-2 h-2 rounded-full", getStatusDotClass(pill.status))} />
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    getStatusDotClass(pill.status),
+                  )}
+                />
                 <span className="text-xs font-medium text-gray-700">
-                  {pill.label}: <span className="text-gray-900">{pill.value}</span>
+                  {pill.label}:{" "}
+                  <span className="text-gray-900">{pill.value}</span>
                 </span>
                 {pill.trend && getTrendIcon(pill.trend)}
               </div>
@@ -130,7 +145,7 @@ export function ZezamiiHeader({
               "bg-white/50 placeholder:text-gray-400",
               isSearchFocused
                 ? "border-purple-500 ring-2 ring-purple-500/20 bg-white"
-                : "border-gray-200 hover:border-gray-300"
+                : "border-gray-200 hover:border-gray-300",
             )}
           />
           <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded">

@@ -21,15 +21,12 @@ import {
   ChevronRight,
   ChevronDown,
   Users,
-  Building2,
-  Shield,
   Bell,
   Lock,
   CreditCard,
   Wifi,
   Radio,
   Activity,
-  FileText,
   BarChart3,
   Settings,
   DollarSign,
@@ -46,6 +43,8 @@ import {
   Inbox,
   Boxes,
   DoorOpen,
+  MapPin,
+  Layers,
 } from "lucide-react";
 import {
   CloudIcon,
@@ -200,14 +199,19 @@ const PRODUCT_SETTINGS: Partial<Record<ProductSlug, NavItem>> = {
 // Global navigation sections
 const GLOBAL_SECTIONS: NavSection[] = [
   {
-    title: "Cloud (Global)",
+    title: "People",
+    defaultExpanded: true,
+    items: [{ label: "People", href: "/dashboard/people", icon: Users }],
+  },
+  {
+    title: "Spaces",
     defaultExpanded: true,
     items: [
-      { label: "People", href: "/dashboard/people", icon: Users },
+      { label: "Sites", href: "/cloud/sites", icon: MapPin },
       {
-        label: "Spaces",
-        href: "/cloud/spaces",
-        icon: Building2,
+        label: "Devices",
+        href: "/devices",
+        icon: Layers,
         children: [
           {
             label: "Digital Locks",
@@ -236,17 +240,6 @@ const GLOBAL_SECTIONS: NavSection[] = [
           },
         ],
       },
-      { label: "Access Spaces", href: "/cloud/access-spaces", icon: Shield },
-      { label: "Alerts", href: "/cloud/alerts", icon: Bell },
-    ],
-  },
-  {
-    title: "Insights",
-    defaultExpanded: false,
-    items: [
-      { label: "Events", href: "/insights/events", icon: Bell },
-      { label: "Audit Trail", href: "/insights/audit-trail", icon: FileText },
-      { label: "Insights", href: "/insights", icon: BarChart3 },
     ],
   },
   {

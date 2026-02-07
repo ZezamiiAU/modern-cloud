@@ -23,9 +23,9 @@
   "dependencies": {
     "@repo/auth": "workspace:*",
     "@repo/config": "workspace:*",
-    "@supabase/supabase-js": "^2.42.0",
-    "@trpc/server": "^11.0.0",
-    "drizzle-orm": "^0.38.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@trpc/server": "^11.9.0",
+    "drizzle-orm": "^0.38.4",
     "postgres": "^3.4.0",
     "stripe": "^14.21.0",
     "superjson": "^2.2.1",

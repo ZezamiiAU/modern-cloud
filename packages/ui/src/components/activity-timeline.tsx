@@ -13,7 +13,13 @@ import {
 } from "./product-icons";
 import { Spinner } from "./spinner";
 
-export type ProductType = "access" | "rooms" | "lockers" | "bookings" | "vision" | "cloud";
+export type ProductType =
+  | "access"
+  | "rooms"
+  | "lockers"
+  | "bookings"
+  | "vision"
+  | "cloud";
 
 export interface ActivityEvent {
   id: string;
@@ -34,7 +40,10 @@ export interface ActivityTimelineProps {
   className?: string;
 }
 
-const productIconConfig: Record<ProductType, { Icon: React.ElementType; color: string; dotColor: string }> = {
+const productIconConfig: Record<
+  ProductType,
+  { Icon: React.ElementType; color: string; dotColor: string }
+> = {
   access: {
     Icon: AccessIcon,
     color: "text-purple-500",
@@ -86,13 +95,13 @@ function groupEventsByDate(events: ActivityEvent[]) {
   events.forEach((event) => {
     const eventDate = new Date(event.timestamp);
     if (eventDate >= today) {
-      groups.Today.push(event);
+      groups.Today!.push(event);
     } else if (eventDate >= yesterday) {
-      groups.Yesterday.push(event);
+      groups.Yesterday!.push(event);
     } else if (eventDate >= lastWeek) {
-      groups["Last 7 days"].push(event);
+      groups["Last 7 days"]!.push(event);
     } else {
-      groups.Older.push(event);
+      groups.Older!.push(event);
     }
   });
 
@@ -100,7 +109,13 @@ function groupEventsByDate(events: ActivityEvent[]) {
   return Object.entries(groups).filter(([_, events]) => events.length > 0);
 }
 
-function TimelineItem({ event, isLast }: { event: ActivityEvent; isLast: boolean }) {
+function TimelineItem({
+  event,
+  isLast,
+}: {
+  event: ActivityEvent;
+  isLast: boolean;
+}) {
   const config = productIconConfig[event.type];
   const Icon = config.Icon;
 
@@ -112,7 +127,12 @@ function TimelineItem({ event, isLast }: { event: ActivityEvent; isLast: boolean
       )}
 
       {/* Icon and dot */}
-      <div className={cn("relative flex items-center justify-center w-6 h-6 rounded-full bg-white border-2", config.dotColor.replace("bg-", "border-"))}>
+      <div
+        className={cn(
+          "relative flex items-center justify-center w-6 h-6 rounded-full bg-white border-2",
+          config.dotColor.replace("bg-", "border-"),
+        )}
+      >
         <Icon className={cn("w-3 h-3", config.color)} />
       </div>
 
@@ -158,7 +178,12 @@ export function ActivityTimeline({
 
   if (events.length === 0) {
     return (
-      <div className={cn("flex flex-col items-center justify-center py-12 text-center", className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-12 text-center",
+          className,
+        )}
+      >
         <p className="text-sm text-muted-foreground">No activity yet</p>
       </div>
     );
@@ -176,7 +201,10 @@ export function ActivityTimeline({
               <TimelineItem
                 key={event.id}
                 event={event}
-                isLast={index === groupEvents.length - 1 && groupName === groupedEvents[groupedEvents.length - 1][0]}
+                isLast={
+                  index === groupEvents.length - 1 &&
+                  groupName === groupedEvents[groupedEvents.length - 1]?.[0]
+                }
               />
             ))}
           </div>

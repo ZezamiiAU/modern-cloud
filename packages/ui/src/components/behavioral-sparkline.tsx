@@ -55,12 +55,15 @@ export function BehavioralSparkline({
           {showTooltip && (
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
+                if (active && payload && payload.length && payload[0]) {
+                  const item = payload[0];
                   return (
                     <div className="rounded-md bg-popover px-2 py-1 text-xs shadow-md border">
-                      <p className="font-medium">{payload[0].payload.day}</p>
+                      <p className="font-medium">
+                        {(item.payload as ChartDataPoint)?.day}
+                      </p>
                       <p className="text-muted-foreground">
-                        {payload[0].value} events
+                        {item.value} events
                       </p>
                     </div>
                   );
