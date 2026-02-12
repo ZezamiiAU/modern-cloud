@@ -22,11 +22,8 @@ import {
   ChevronDown,
   Users,
   Bell,
-  Lock,
   CreditCard,
   Wifi,
-  Radio,
-  Activity,
   BarChart3,
   Settings,
   DollarSign,
@@ -45,6 +42,7 @@ import {
   DoorOpen,
   MapPin,
   Layers,
+  Radar,
 } from "lucide-react";
 import {
   CloudIcon,
@@ -129,6 +127,7 @@ interface NavItem {
 
 interface NavSection {
   title: string;
+  icon?: React.ComponentType<{ className?: string }>;
   items: NavItem[];
   defaultExpanded?: boolean;
 }
@@ -200,50 +199,28 @@ const PRODUCT_SETTINGS: Partial<Record<ProductSlug, NavItem>> = {
 const GLOBAL_SECTIONS: NavSection[] = [
   {
     title: "People",
-    defaultExpanded: true,
-    items: [{ label: "People", href: "/dashboard/people", icon: Users }],
+    icon: Users,
+    defaultExpanded: false,
+    items: [
+      { label: "People", href: "/dashboard/people", icon: Users },
+      { label: "Teams", href: "/dashboard/teams", icon: Users },
+      { label: "Guests", href: "/dashboard/guests", icon: PersonStanding },
+    ],
   },
   {
     title: "Spaces",
-    defaultExpanded: true,
+    icon: MapPin,
+    defaultExpanded: false,
     items: [
-      { label: "Sites", href: "/cloud/sites", icon: MapPin },
-      {
-        label: "Devices",
-        href: "/devices",
-        icon: Layers,
-        children: [
-          {
-            label: "Digital Locks",
-            href: "/devices/digital-locks",
-            icon: Lock,
-          },
-          {
-            label: "Access Readers",
-            href: "/devices/access-readers",
-            icon: Radio,
-          },
-          { label: "Gateways", href: "/devices/gateways", icon: Wifi },
-          {
-            label: "Sensors",
-            href: "/devices/sensors",
-            icon: Activity,
-            disabled: true,
-            badge: "Coming Soon",
-          },
-          {
-            label: "Controllers",
-            href: "/devices/controllers",
-            icon: Activity,
-            disabled: true,
-            badge: "Coming Soon",
-          },
-        ],
-      },
+      { label: "Sites", href: "/spaces/sites", icon: MapPin },
+      { label: "Floor Plan", href: "/spaces/floorplan", icon: Layers },
+      { label: "Devices", href: "/spaces/devices", icon: Wifi },
+      { label: "Spatial Insights", href: "/spatial-insights", icon: Radar },
     ],
   },
   {
     title: "Admin",
+    icon: Settings,
     defaultExpanded: false,
     items: [
       { label: "Settings", href: "/admin/settings", icon: Settings },
@@ -290,7 +267,7 @@ export interface ZezamiiSidebarProps {
   onLogout?: () => void;
 }
 
-export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
+export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
   const [productDropdownOpen, setProductDropdownOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -305,22 +282,59 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
   });
 
   const pathname = usePathname();
-  const currentProduct = detectProduct(pathname);
-  const currentProductConfig = PRODUCTS.find((p) => p.slug === currentProduct);
+
+  // Memoize computed values to prevent recalculation on every render
+  const currentProduct = React.useMemo(() => detectProduct(pathname), [pathname]);
+  const currentProductConfig = React.useMemo(
+    () => PRODUCTS.find((p) => p.slug === currentProduct),
+    [currentProduct]
+  );
   const productNavItems = PRODUCT_NAV[currentProduct];
   const productSettings = PRODUCT_SETTINGS[currentProduct];
 
-  const toggleSection = (title: string) => {
+  // Memoize toggle function
+  const toggleSection = React.useCallback((title: string) => {
     setExpandedSections((prev) => ({
       ...prev,
       [title]: !prev[title],
     }));
-  };
+  }, []);
+
+  // Memoize collapse toggle
+  const toggleCollapsed = React.useCallback(() => {
+    setCollapsed((prev) => !prev);
+  }, []);
+
+  // Memoize product dropdown toggle
+  const toggleProductDropdown = React.useCallback(() => {
+    setProductDropdownOpen((prev) => !prev);
+  }, []);
+
+  // Memoize user menu toggle
+  const toggleUserMenu = React.useCallback(() => {
+    setUserMenuOpen((prev) => !prev);
+  }, []);
+
+  // Memoize close handlers
+  const closeProductDropdown = React.useCallback(() => {
+    setProductDropdownOpen(false);
+  }, []);
+
+  const closeUserMenuAndLogout = React.useCallback(() => {
+    setUserMenuOpen(false);
+    onLogout?.();
+  }, [onLogout]);
+
+  // Memoize accent class
+  const productAccentClass = React.useMemo(
+    () => getProductAccentClass(currentProduct),
+    [currentProduct]
+  );
 
   return (
     <aside
       className={cn(
-        "bg-slate-900 text-white flex flex-col shrink-0 transition-all duration-300 h-screen",
+        "bg-slate-900 text-white flex flex-col shrink-0 transition-[width] duration-200 h-screen",
         collapsed ? "w-16" : "w-56",
       )}
     >
@@ -328,20 +342,13 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
       <div className="p-3 border-b border-slate-700">
         <div className="relative">
           <button
-            onClick={() =>
-              !collapsed && setProductDropdownOpen(!productDropdownOpen)
-            }
+            onClick={collapsed ? undefined : toggleProductDropdown}
             className={cn(
-              "w-full flex items-center gap-3 p-2 rounded-lg border-2 transition-all",
+              "w-full flex items-center gap-3 p-2 rounded-lg border-2 transition-colors",
               "hover:bg-slate-800",
-              getProductAccentClass(currentProduct),
+              productAccentClass,
               collapsed && "justify-center p-2",
             )}
-            style={{
-              boxShadow: collapsed
-                ? "none"
-                : `0 0 12px ${getProductAccentClass(currentProduct).split(" ")[1]}`,
-            }}
           >
             {currentProductConfig && (
               <currentProductConfig.icon
@@ -373,7 +380,7 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
                   key={product.slug}
                   href={product.defaultRoute}
                   prefetch={true}
-                  onClick={() => setProductDropdownOpen(false)}
+                  onClick={closeProductDropdown}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 hover:bg-slate-700 transition-colors",
                     product.slug === currentProduct && "bg-slate-700",
@@ -425,37 +432,49 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
         )}
 
         {/* Global Sections */}
-        {GLOBAL_SECTIONS.map((section) => (
-          <div key={section.title} className="space-y-1">
-            {!collapsed && (
-              <button
-                onClick={() => toggleSection(section.title)}
-                className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-semibold text-slate-400 uppercase hover:text-white transition-colors"
-              >
-                <span>{section.title}</span>
-                <ChevronDown
+        {GLOBAL_SECTIONS.map((section) => {
+          const SectionIcon = section.icon;
+          return (
+            <div key={section.title} className="space-y-1">
+              {!collapsed && (
+                <button
+                  onClick={() => toggleSection(section.title)}
                   className={cn(
-                    "w-3 h-3 transition-transform",
-                    expandedSections[section.title] && "rotate-180",
+                    "w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors",
+                    expandedSections[section.title]
+                      ? "text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
                   )}
-                />
-              </button>
-            )}
-            {(collapsed || expandedSections[section.title]) && (
-              <div className="space-y-0.5">
-                {section.items.map((item) => (
-                  <NavItemComponent
-                    key={item.href}
-                    item={item}
-                    pathname={pathname}
-                    collapsed={collapsed}
-                    product="cloud"
+                >
+                  {SectionIcon && (
+                    <SectionIcon className="w-4 h-4 text-slate-400 shrink-0" />
+                  )}
+                  <span className="flex-1 text-left font-medium">{section.title}</span>
+                  <span className="text-xs text-slate-500 mr-1">{section.items.length}</span>
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-slate-400 transition-transform",
+                      expandedSections[section.title] && "rotate-180",
+                    )}
                   />
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
+                </button>
+              )}
+              {(collapsed || expandedSections[section.title]) && (
+                <div className="space-y-0.5 ml-6 border-l border-slate-700 pl-2">
+                  {section.items.map((item) => (
+                    <NavItemComponent
+                      key={item.href}
+                      item={item}
+                      pathname={pathname}
+                      collapsed={collapsed}
+                      product="cloud"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Footer */}
@@ -464,7 +483,7 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
         {user && (
           <div className="p-3 border-b border-slate-700 relative">
             <button
-              onClick={() => !collapsed && setUserMenuOpen(!userMenuOpen)}
+              onClick={collapsed ? undefined : toggleUserMenu}
               className={cn(
                 "w-full flex items-center gap-2 hover:bg-slate-800 rounded-md p-1 -m-1 transition-colors",
                 collapsed && "justify-center",
@@ -497,10 +516,7 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
             {userMenuOpen && !collapsed && (
               <div className="absolute bottom-full left-0 right-0 mb-1 bg-slate-800 border border-slate-700 rounded-lg shadow-lg z-50">
                 <button
-                  onClick={() => {
-                    setUserMenuOpen(false);
-                    onLogout?.();
-                  }}
+                  onClick={closeUserMenuAndLogout}
                   className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 transition-colors text-left rounded-lg"
                 >
                   <ChevronRight className="w-4 h-4 text-slate-400 rotate-180" />
@@ -513,7 +529,7 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
 
         {/* Collapse Toggle */}
         <button
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           className="w-full p-3 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
         >
           {collapsed ? (
@@ -525,7 +541,7 @@ export function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
       </div>
     </aside>
   );
-}
+});
 
 // Navigation Item Component
 interface NavItemComponentProps {
@@ -536,7 +552,35 @@ interface NavItemComponentProps {
   depth?: number;
 }
 
-function NavItemComponent({
+// Custom comparison - only re-render if active state changes or other props change
+function navItemPropsAreEqual(
+  prevProps: NavItemComponentProps,
+  nextProps: NavItemComponentProps
+): boolean {
+  // Check if collapsed or product changed
+  if (prevProps.collapsed !== nextProps.collapsed) return false;
+  if (prevProps.product !== nextProps.product) return false;
+  if (prevProps.depth !== nextProps.depth) return false;
+  if (prevProps.item !== nextProps.item) return false;
+
+  // Only re-render if isActive state changed
+  const prevIsActive = prevProps.pathname === prevProps.item.href;
+  const nextIsActive = nextProps.pathname === nextProps.item.href;
+  if (prevIsActive !== nextIsActive) return false;
+
+  // Check if any child's active state changed
+  const prevChildActive = prevProps.item.children?.some(
+    (child) => prevProps.pathname === child.href
+  );
+  const nextChildActive = nextProps.item.children?.some(
+    (child) => nextProps.pathname === child.href
+  );
+  if (prevChildActive !== nextChildActive) return false;
+
+  return true;
+}
+
+const NavItemComponent = React.memo(function NavItemComponent({
   item,
   pathname,
   collapsed,
@@ -544,12 +588,21 @@ function NavItemComponent({
   depth = 0,
 }: NavItemComponentProps) {
   const [expanded, setExpanded] = React.useState(false);
+
+  // Memoize computed values
   const isActive = pathname === item.href;
   const hasChildren = item.children && item.children.length > 0;
-  const isChildActive =
-    hasChildren && item.children?.some((child) => pathname === child.href);
+  const isChildActive = React.useMemo(
+    () => hasChildren && item.children?.some((child) => pathname === child.href),
+    [hasChildren, item.children, pathname]
+  );
   const IconComponent = item.icon;
-  const productColor = getProductColorClass(product);
+  const productColor = React.useMemo(() => getProductColorClass(product), [product]);
+
+  // Memoize toggle handler
+  const toggleExpanded = React.useCallback(() => {
+    setExpanded((prev) => !prev);
+  }, []);
 
   // Auto-expand if a child is active
   React.useEffect(() => {
@@ -588,9 +641,9 @@ function NavItemComponent({
     return (
       <div>
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={toggleExpanded}
           className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all relative",
+            "w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors relative",
             isActive || isChildActive
               ? "bg-slate-800 text-white font-semibold"
               : "text-slate-300 hover:bg-slate-800 hover:text-white",
@@ -631,24 +684,17 @@ function NavItemComponent({
   return (
     <Link
       href={item.href}
+      prefetch={true}
       title={collapsed ? item.label : undefined}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all relative",
+        "flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors relative",
         isActive
-          ? `bg-slate-800 text-white font-semibold border-l-3 ${productColor}`
+          ? "bg-slate-800 text-white font-semibold border-l-[3px] border-l-current"
           : "text-slate-300 hover:bg-slate-800 hover:text-white",
+        isActive && productColor,
         collapsed && "justify-center px-2",
         depth > 0 && !collapsed && "pl-8",
       )}
-      style={
-        isActive
-          ? {
-              borderLeftWidth: "3px",
-              borderLeftColor: productColor.replace("text-", ""),
-              boxShadow: `0 0 8px ${productColor.replace("text-", "").split("-")[0]}-500/30`,
-            }
-          : undefined
-      }
     >
       <IconComponent
         className={cn("w-4 h-4 shrink-0", isActive && productColor)}
@@ -656,4 +702,4 @@ function NavItemComponent({
       {!collapsed && <span className="flex-1">{item.label}</span>}
     </Link>
   );
-}
+}, navItemPropsAreEqual);

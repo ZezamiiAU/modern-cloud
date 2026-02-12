@@ -28,7 +28,59 @@ export interface IntelligenceBarProps {
   className?: string;
 }
 
-export function IntelligenceBar({
+// Memoized metric item to prevent re-renders
+const MetricItem = React.memo(function MetricItem({
+  metric,
+}: {
+  metric: IntelligenceMetric;
+}) {
+  const Icon = metric.icon;
+  return (
+    <div
+      className="flex items-center gap-2"
+      title={metric.tooltip}
+    >
+      {Icon && (
+        <Icon
+          className={cn("h-4 w-4", metric.iconColor || "text-gray-500")}
+        />
+      )}
+      <div className="flex items-baseline gap-2">
+        <span className="text-sm text-gray-600">{metric.label}:</span>
+        <span
+          className={cn(
+            "text-sm font-semibold",
+            metric.valueColor || "text-gray-900"
+          )}
+        >
+          {metric.value}
+        </span>
+      </div>
+    </div>
+  );
+});
+
+// Memoized action button to prevent re-renders
+const ActionButton = React.memo(function ActionButton({
+  action,
+}: {
+  action: IntelligenceAction;
+}) {
+  const Icon = action.icon;
+  return (
+    <Button
+      variant={action.variant || "default"}
+      size="sm"
+      onClick={action.onClick}
+      disabled={action.disabled}
+    >
+      {Icon && <Icon className="h-4 w-4 mr-2" />}
+      {action.label}
+    </Button>
+  );
+});
+
+export const IntelligenceBar = React.memo(function IntelligenceBar({
   metrics,
   actions = [],
   className,
@@ -43,59 +95,20 @@ export function IntelligenceBar({
       <div className="flex items-center justify-between gap-6">
         {/* Metrics */}
         <div className="flex items-center gap-8">
-          {metrics.map((metric) => {
-            const Icon = metric.icon;
-            return (
-              <div
-                key={metric.id}
-                className="flex items-center gap-2"
-                title={metric.tooltip}
-              >
-                {Icon && (
-                  <Icon
-                    className={cn(
-                      "h-4 w-4",
-                      metric.iconColor || "text-gray-500"
-                    )}
-                  />
-                )}
-                <div className="flex items-baseline gap-2">
-                  <span className="text-sm text-gray-600">{metric.label}:</span>
-                  <span
-                    className={cn(
-                      "text-sm font-semibold",
-                      metric.valueColor || "text-gray-900"
-                    )}
-                  >
-                    {metric.value}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+          {metrics.map((metric) => (
+            <MetricItem key={metric.id} metric={metric} />
+          ))}
         </div>
 
         {/* Actions */}
         {actions.length > 0 && (
           <div className="flex items-center gap-2">
-            {actions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <Button
-                  key={action.id}
-                  variant={action.variant || "default"}
-                  size="sm"
-                  onClick={action.onClick}
-                  disabled={action.disabled}
-                >
-                  {Icon && <Icon className="h-4 w-4 mr-2" />}
-                  {action.label}
-                </Button>
-              );
-            })}
+            {actions.map((action) => (
+              <ActionButton key={action.id} action={action} />
+            ))}
           </div>
         )}
       </div>
     </div>
   );
-}
+});

@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { Line, LineChart, ResponsiveContainer, Tooltip } from "recharts";
 import { cn } from "../lib/utils";
 
 export interface BehavioralSparklineProps {
@@ -13,75 +12,109 @@ export interface BehavioralSparklineProps {
   className?: string;
 }
 
-interface ChartDataPoint {
-  value: number;
-  day: string;
-}
-
 const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-export function BehavioralSparkline({
+// Lightweight SVG sparkline - no recharts dependency
+export const BehavioralSparkline = React.memo(function BehavioralSparkline({
   data,
-  width,
+  width = 80,
   height = 24,
-  color = "#3b82f6", // blue-500
+  color = "#3b82f6",
   showTooltip = true,
   className,
 }: BehavioralSparklineProps) {
-  // Transform data into format Recharts expects
-  const chartData: ChartDataPoint[] = data.map((value, index) => ({
-    value,
-    day: dayLabels[index] || `Day ${index + 1}`,
-  }));
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
-  // Calculate color intensity based on max value
-  const maxValue = Math.max(...data, 1); // Prevent division by zero
-  const avgValue = data.reduce((a, b) => a + b, 0) / data.length;
+  // Calculate path and normalized values
+  const { path, points, strokeColor } = React.useMemo(() => {
+    if (data.length === 0) return { path: "", points: [], strokeColor: "#94a3b8" };
 
-  // Determine color intensity
-  const getStrokeColor = () => {
-    if (avgValue > maxValue * 0.7) return color; // High activity
-    if (avgValue > maxValue * 0.4) return color; // Medium activity
-    return "#94a3b8"; // Low activity - gray
-  };
+    const maxValue = Math.max(...data, 1);
+    const minValue = Math.min(...data, 0);
+    const range = maxValue - minValue || 1;
+    const avgValue = data.reduce((a, b) => a + b, 0) / data.length;
+
+    // Determine stroke color based on activity
+    const stroke = avgValue > maxValue * 0.4 ? color : "#94a3b8";
+
+    // Calculate points
+    const padding = 2;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+
+    const pts = data.map((value, index) => {
+      const x = padding + (index / (data.length - 1)) * chartWidth;
+      const y = padding + chartHeight - ((value - minValue) / range) * chartHeight;
+      return { x, y, value };
+    });
+
+    // Create SVG path
+    const pathData = pts
+      .map((point, i) => `${i === 0 ? "M" : "L"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`)
+      .join(" ");
+
+    return { path: pathData, points: pts, strokeColor: stroke };
+  }, [data, width, height, color]);
 
   return (
     <div
-      className={cn("inline-block", className)}
-      style={{ width: width || 80, height }}
+      className={cn("inline-block relative", className)}
+      style={{ width, height }}
     >
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData}>
-          {showTooltip && (
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length && payload[0]) {
-                  const item = payload[0];
-                  return (
-                    <div className="rounded-md bg-popover px-2 py-1 text-xs shadow-md border">
-                      <p className="font-medium">
-                        {(item.payload as ChartDataPoint)?.day}
-                      </p>
-                      <p className="text-muted-foreground">
-                        {item.value} events
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              }}
+      <svg
+        width={width}
+        height={height}
+        className="overflow-visible"
+        onMouseLeave={() => setHoveredIndex(null)}
+      >
+        {/* Main line */}
+        <path
+          d={path}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Invisible hit areas for tooltip */}
+        {showTooltip &&
+          points.map((point, index) => (
+            <circle
+              key={index}
+              cx={point.x}
+              cy={point.y}
+              r={6}
+              fill="transparent"
+              onMouseEnter={() => setHoveredIndex(index)}
             />
-          )}
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={getStrokeColor()}
-            strokeWidth={1.5}
-            dot={false}
-            isAnimationActive={false}
+          ))}
+
+        {/* Visible dot on hover */}
+        {hoveredIndex !== null && points[hoveredIndex] && (
+          <circle
+            cx={points[hoveredIndex].x}
+            cy={points[hoveredIndex].y}
+            r={3}
+            fill={strokeColor}
           />
-        </LineChart>
-      </ResponsiveContainer>
+        )}
+      </svg>
+
+      {/* Tooltip */}
+      {showTooltip && hoveredIndex !== null && points[hoveredIndex] && (
+        <div
+          className="absolute z-50 rounded-md bg-popover px-2 py-1 text-xs shadow-md border pointer-events-none"
+          style={{
+            left: points[hoveredIndex].x,
+            top: -28,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <p className="font-medium">{dayLabels[hoveredIndex] || `Day ${hoveredIndex + 1}`}</p>
+          <p className="text-muted-foreground">{points[hoveredIndex].value} events</p>
+        </div>
+      )}
     </div>
   );
-}
+});

@@ -89,8 +89,8 @@ export default function DashboardPage() {
       <DataTable
         title="Recent Activity"
         description="Latest unlock events across all sites"
-        columns={columns}
-        data={recentActivity}
+        columns={columns as unknown as Column<Record<string, unknown>>[]}
+        data={recentActivity as unknown as Record<string, unknown>[]}
       />
     </div>
   );

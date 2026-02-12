@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Users, Clock, Smartphone, UserPlus } from "lucide-react";
 import {
   IdentityWorkstation,
@@ -10,13 +12,37 @@ import {
   type IntelligenceMetric,
   type IntelligenceAction,
 } from "@repo/ui";
+import { cn } from "@repo/ui";
 
-// Tab navigation
+// Tab navigation - links to separate pages
 const tabs = [
-  { id: "people", label: "People" },
-  { id: "teams", label: "Teams" },
-  { id: "guests", label: "Guests" },
-];
+  { id: "people", label: "People", href: "/dashboard/people" },
+  { id: "teams", label: "Teams", href: "/dashboard/teams" },
+  { id: "guests", label: "Guests", href: "/dashboard/guests" },
+] as const;
+
+// Memoized tab link
+const TabLink = memo(function TabLink({
+  tab,
+  isActive,
+}: {
+  tab: (typeof tabs)[number];
+  isActive: boolean;
+}) {
+  return (
+    <Link
+      href={tab.href}
+      className={cn(
+        "pb-4 px-1 border-b-2 font-medium text-sm transition-colors",
+        isActive
+          ? "border-indigo-500 text-indigo-600"
+          : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
+      )}
+    >
+      {tab.label}
+    </Link>
+  );
+});
 
 // Mock data for demonstration
 const mockUsers: IdentityWorkstationUser[] = [
@@ -38,7 +64,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "access",
       action: "Access granted",
-      timestamp: new Date(Date.now() - 1000 * 60 * 15), // 15 minutes ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 15),
     },
     activeCoverage: {
       spacesAllowed: 14,
@@ -62,7 +88,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "rooms",
       action: "Room booked",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
     },
     activeCoverage: {
       spacesAllowed: 8,
@@ -86,7 +112,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "lockers",
       action: "Locker accessed",
-      timestamp: new Date(Date.now() - 1000 * 60 * 5), // 5 minutes ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
     },
     activeCoverage: {
       spacesAllowed: 25,
@@ -110,7 +136,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "vision",
       action: "Camera accessed",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5), // 5 hours ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
     },
     activeCoverage: {
       spacesAllowed: 6,
@@ -134,7 +160,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "bookings",
       action: "Booking cancelled",
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 days ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
     },
     activeCoverage: {
       spacesAllowed: 5,
@@ -158,7 +184,7 @@ const mockUsers: IdentityWorkstationUser[] = [
     lastEvent: {
       type: "access",
       action: "Access revoked",
-      timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
+      timestamp: new Date(Date.now() - 1000 * 60 * 30),
     },
     activeCoverage: {
       spacesAllowed: 20,
@@ -193,9 +219,10 @@ function generateMockActivity(userId: string): ActivityEvent[] {
   const events: ActivityEvent[] = [];
 
   for (let i = 0; i < 50; i++) {
-    const type = types[Math.floor(Math.random() * types.length)];
-    const action = actions[type][Math.floor(Math.random() * actions[type].length)];
-    const hoursAgo = Math.floor(Math.random() * 24 * 7); // Random time within last week
+    const type = types[Math.floor(Math.random() * types.length)] ?? "access";
+    const typeActions = actions[type];
+    const action = typeActions[Math.floor(Math.random() * typeActions.length)] ?? "Access granted";
+    const hoursAgo = Math.floor(Math.random() * 24 * 7);
 
     events.push({
       id: `${userId}-event-${i}`,
@@ -208,12 +235,11 @@ function generateMockActivity(userId: string): ActivityEvent[] {
     });
   }
 
-  // Sort by timestamp descending
   return events.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
 
 export default function PeoplePage() {
-  const [activeTab, setActiveTab] = useState("people");
+  const pathname = usePathname();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
   const [activityLoading, setActivityLoading] = useState(false);
@@ -222,17 +248,14 @@ export default function PeoplePage() {
     setSelectedUserId(userId);
     setActivityLoading(true);
 
-    // Simulate API call
     setTimeout(() => {
       setActivityEvents(generateMockActivity(userId));
       setActivityLoading(false);
     }, 500);
   };
 
-  // Calculate metrics
   const metrics: IntelligenceMetric[] = useMemo(() => {
     const activeUsers = mockUsers.filter((u) => u.status === "active").length;
-    const guestsExpiringToday = 0; // Placeholder for guests expiring today
     const mobileCredentials = mockUsers.filter((u) => u.credentials.mobile).length;
     const mobileSyncSuccess = Math.round((mobileCredentials / mockUsers.length) * 100);
 
@@ -247,7 +270,7 @@ export default function PeoplePage() {
       {
         id: "guests-expiring",
         label: "Guests Expiring Today",
-        value: guestsExpiringToday,
+        value: 0,
         icon: Clock,
         iconColor: "text-orange-500",
       },
@@ -261,80 +284,50 @@ export default function PeoplePage() {
     ];
   }, []);
 
-  // Define actions
-  const actions: IntelligenceAction[] = [
-    {
-      id: "add-guest",
-      label: "Add Guest",
-      onClick: () => alert("Add Guest modal coming soon"),
-      variant: "outline",
-    },
-    {
-      id: "add-user",
-      label: "Add User",
-      icon: UserPlus,
-      onClick: () => alert("Add User modal coming soon"),
-      variant: "default",
-    },
-  ];
+  const actions: IntelligenceAction[] = useMemo(
+    () => [
+      {
+        id: "add-guest",
+        label: "Add Guest",
+        onClick: () => alert("Add Guest modal coming soon"),
+        variant: "outline",
+      },
+      {
+        id: "add-user",
+        label: "Add User",
+        icon: UserPlus,
+        onClick: () => alert("Add User modal coming soon"),
+        variant: "default",
+      },
+    ],
+    []
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-[1600px] mx-auto">
-        {/* Intelligence Bar */}
         <IntelligenceBar metrics={metrics} actions={actions} />
 
-        {/* Tabs */}
         <div className="px-6 pt-4">
           <div className="border-b border-gray-200 mb-6">
             <nav className="flex gap-8">
               {tabs.map((tab) => (
-                <button
+                <TabLink
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`
-                    pb-4 px-1 border-b-2 font-medium text-sm transition-colors
-                    ${
-                      activeTab === tab.id
-                        ? "border-indigo-500 text-indigo-600"
-                        : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                    }
-                  `}
-                >
-                  {tab.label}
-                </button>
+                  tab={tab}
+                  isActive={pathname === tab.href}
+                />
               ))}
             </nav>
           </div>
 
-          {/* Tab Content */}
-          {activeTab === "people" && (
-            <IdentityWorkstation
-              users={mockUsers}
-              onUserClick={handleUserClick}
-              selectedUserId={selectedUserId}
-              activityEvents={activityEvents}
-              activityLoading={activityLoading}
-            />
-          )}
-
-          {activeTab === "teams" && (
-            <div className="bg-white rounded-lg border p-12 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Teams Management</h2>
-              <p className="text-gray-600">
-                Team management interface coming soon. Organize people into teams with inherited permissions.
-              </p>
-            </div>
-          )}
-
-          {activeTab === "guests" && (
-            <div className="bg-white rounded-lg border p-12 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Guest Management</h2>
-              <p className="text-gray-600">
-                Guest management interface coming soon. Manage temporary access for visitors and contractors.
-              </p>
-            </div>
-          )}
+          <IdentityWorkstation
+            users={mockUsers}
+            onUserClick={handleUserClick}
+            selectedUserId={selectedUserId}
+            activityEvents={activityEvents}
+            activityLoading={activityLoading}
+          />
         </div>
       </div>
     </div>

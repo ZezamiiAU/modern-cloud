@@ -140,7 +140,7 @@ function TimelineItem({
       <div className="flex-1 min-w-0 pt-0.5">
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="font-medium text-sm text-gray-900">{event.action}</p>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
+          <span className="text-xs text-muted-foreground whitespace-nowrap" suppressHydrationWarning>
             {formatDistanceToNow(event.timestamp, { addSuffix: true })}
           </span>
         </div>

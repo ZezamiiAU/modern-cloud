@@ -283,7 +283,7 @@ export function IdentityWorkstation({
               <Icon className={cn("w-4 h-4", colorClass)} />
               <div>
                 <div className="text-xs font-medium">{event.action}</div>
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground" suppressHydrationWarning>
                   {formatDistanceToNow(event.timestamp, { addSuffix: true })}
                 </div>
               </div>

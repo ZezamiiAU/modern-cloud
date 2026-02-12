@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { ZezamiiSidebar } from "@repo/ui";
 import { useRouter } from "next/navigation";
 
@@ -11,13 +12,13 @@ interface SidebarWrapperProps {
   };
 }
 
-export function SidebarWrapper({ user }: SidebarWrapperProps) {
+export const SidebarWrapper = React.memo(function SidebarWrapper({ user }: SidebarWrapperProps) {
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout = React.useCallback(() => {
     // Redirect to Kinde logout endpoint
     router.push("/api/auth/logout");
-  };
+  }, [router]);
 
   return <ZezamiiSidebar user={user} onLogout={handleLogout} />;
-}
+});

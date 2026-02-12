@@ -7,7 +7,7 @@
  */
 
 import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
-import type { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 // Check if Kinde is properly configured
 const isKindeConfigured = () => {

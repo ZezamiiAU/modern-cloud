@@ -20,8 +20,17 @@ const handler = async (req: Request) => {
 
   // Get Kinde session
   const { getUser, getAccessTokenRaw } = getKindeServerSession();
-  const kindeUser = await getUser();
+  const rawKindeUser = await getUser();
   const accessToken = await getAccessTokenRaw();
+
+  // Transform to our KindeUser type (handle nullable email)
+  const kindeUser = rawKindeUser ? {
+    id: rawKindeUser.id,
+    email: rawKindeUser.email ?? "",
+    givenName: rawKindeUser.given_name ?? undefined,
+    familyName: rawKindeUser.family_name ?? undefined,
+    picture: rawKindeUser.picture ?? undefined,
+  } : null;
 
   // Parse token claims if we have a token
   let tokenClaims = null;

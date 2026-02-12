@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -19,13 +19,8 @@ import {
 } from "@repo/ui";
 import { Copy, QrCode, MapPin, Hash } from "lucide-react";
 
-// Dynamically import QRCodeStyling to avoid SSR issues
-let QRCodeStyling: unknown = null;
-if (typeof window !== "undefined") {
-  import("qr-code-styling").then((module) => {
-    QRCodeStyling = module.default;
-  });
-}
+// Lazy load QRCodeStyling - it's a heavy library
+import type QRCodeStyling from "qr-code-styling";
 
 interface Device {
   id: string;
@@ -39,7 +34,7 @@ interface Device {
   siteSlug: string;
 }
 
-// Mock data - replace with actual API call
+// Mock data - static, defined outside component
 const mockDevices: Device[] = [
   {
     id: "790e661a-1055-48a5-8da5-db9aeeb1",
@@ -88,11 +83,9 @@ export function QRGenerator() {
   const [pwaBaseUrl, setPwaBaseUrl] = useState("http://localhost:3001");
   const qrRef = useRef<HTMLDivElement>(null);
 
-  const devices = mockDevices;
-
   const organisations = useMemo(() => {
     const uniqueOrgs = new Map<string, { id: string; name: string; slug: string }>();
-    devices.forEach((device) => {
+    mockDevices.forEach((device) => {
       if (device.orgId && device.orgName) {
         uniqueOrgs.set(device.orgId, {
           id: device.orgId,
@@ -102,11 +95,11 @@ export function QRGenerator() {
       }
     });
     return Array.from(uniqueOrgs.values());
-  }, [devices]);
+  }, []);
 
   const sites = useMemo(() => {
     const uniqueSites = new Map<string, { id: string; name: string; slug: string }>();
-    devices.forEach((device) => {
+    mockDevices.forEach((device) => {
       if (device.siteId && device.siteName) {
         uniqueSites.set(device.siteId, {
           id: device.siteId,
@@ -116,37 +109,40 @@ export function QRGenerator() {
       }
     });
     return Array.from(uniqueSites.values());
-  }, [devices]);
+  }, []);
 
-  const filteredDevices = selectedOrgId
-    ? devices.filter(
-        (d) =>
-          d.orgId === selectedOrgId &&
-          (!selectedSiteId || selectedSiteId === "all" || d.siteId === selectedSiteId)
-      )
-    : [];
+  const filteredDevices = useMemo(() => {
+    if (!selectedOrgId) return [];
+    return mockDevices.filter(
+      (d) =>
+        d.orgId === selectedOrgId &&
+        (!selectedSiteId || selectedSiteId === "all" || d.siteId === selectedSiteId)
+    );
+  }, [selectedOrgId, selectedSiteId]);
 
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
-  };
+  }, []);
 
-  const generateQRCode = (device: Device) => {
-    if (!QRCodeStyling) {
-      console.log("QRCodeStyling not loaded yet");
-      return;
-    }
+  const generateQRCode = useCallback(async (device: Device) => {
+    // Dynamically import qr-code-styling only when needed
+    const QRCodeStylingModule = await import("qr-code-styling");
+    const QRCodeStylingClass = QRCodeStylingModule.default;
+
     const qrUrl = `${pwaBaseUrl}/p/${device.orgSlug}/${device.siteSlug}/${device.slug}`;
-    const qr = new QRCodeStyling({
+    const qr = new QRCodeStylingClass({
       width: qrSettings.size,
       height: qrSettings.size,
       type: "svg",
       data: qrUrl,
-      errorCorrectionLevel: qrSettings.errorCorrection,
       margin: 5,
+      qrOptions: {
+        errorCorrectionLevel: qrSettings.errorCorrection,
+      },
       dotsOptions: {
         color: "#000000",
       },
@@ -155,18 +151,33 @@ export function QRGenerator() {
       },
     });
     setQRCode(qr);
-  };
+  }, [pwaBaseUrl, qrSettings.size, qrSettings.errorCorrection]);
 
+  // Generate QR code when device is selected
   useEffect(() => {
-    const checkLibraryLoaded = setInterval(() => {
-      if (QRCodeStyling && selectedDevice && !qrCode) {
-        generateQRCode(selectedDevice);
-        clearInterval(checkLibraryLoaded);
-      }
-    }, 100);
-    return () => clearInterval(checkLibraryLoaded);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDevice, qrCode]);
+    if (selectedDevice) {
+      generateQRCode(selectedDevice);
+    }
+  }, [selectedDevice, generateQRCode]);
+
+  // Append QR code to DOM when it changes
+  useEffect(() => {
+    if (qrCode && qrRef.current) {
+      qrRef.current.innerHTML = "";
+      qrCode.append(qrRef.current);
+    }
+  }, [qrCode]);
+
+  const handleSizeChange = useCallback((v: number[]) => {
+    const newSize = v[0];
+    if (newSize !== undefined) {
+      setQRSettings((prev) => ({ ...prev, size: newSize }));
+    }
+  }, []);
+
+  const handleErrorCorrectionChange = useCallback((v: string) => {
+    setQRSettings((prev) => ({ ...prev, errorCorrection: v as "L" | "M" | "Q" | "H" }));
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-20rem)] gap-6">
@@ -230,7 +241,7 @@ export function QRGenerator() {
               <div className="flex flex-col items-start gap-1 w-full">
                 <span className="font-medium text-sm">{device.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {device.siteName} • {device.orgName}
+                  {device.siteName} - {device.orgName}
                 </span>
               </div>
             </Button>
@@ -402,9 +413,7 @@ export function QRGenerator() {
               max={800}
               min={200}
               step={100}
-              onValueChange={(v) => {
-                setQRSettings((prev) => ({ ...prev, size: v[0] }));
-              }}
+              onValueChange={handleSizeChange}
             />
           </div>
 
@@ -412,9 +421,7 @@ export function QRGenerator() {
             <Label htmlFor="error-correction">Error Correction</Label>
             <Select
               value={qrSettings.errorCorrection}
-              onValueChange={(v: unknown) => {
-                setQRSettings((prev) => ({ ...prev, errorCorrection: v }));
-              }}
+              onValueChange={handleErrorCorrectionChange}
             >
               <SelectTrigger id="error-correction">
                 <SelectValue placeholder="Select error correction" />
@@ -433,4 +440,3 @@ export function QRGenerator() {
     </div>
   );
 }
-

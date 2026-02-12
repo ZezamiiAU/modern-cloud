@@ -1,0 +1,42 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl:*)",
+      "Bash(findstr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nchore: add Vercel deployment configuration\n\nAdd vercel.json files to each app for proper Turborepo monorepo deployment\nwith pnpm and turbo build filters.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "WebFetch(domain:zezamii-cloud-beta.vercel.app)",
+      "Bash(git commit:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm --filter @app/cloud dev:*)",
+      "Bash(timeout:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(pnpm outdated:*)",
+      "Bash(pnpm update:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(pnpm audit:*)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(claude skill add:*)",
+      "Bash(pnpm dev)",
+      "Bash(pnpm --filter @app/cloud type-check:*)",
+      "Bash(pnpm --filter @app/cloud build:*)",
+      "Bash(vercel:*)",
+      "Bash(cmd.exe /c \"taskkill /F /PID 41756 & taskkill /F /PID 52564 & taskkill /F /PID 35596\")",
+      "Bash(powershell -Command \"Stop-Process -Id 35596,41756,52564 -Force -ErrorAction SilentlyContinue; ''Processes killed''\")",
+      "Bash(del \"C:\\\\dev\\\\modern\\\\apps\\\\cloud\\\\src\\\\app\\\\spatial-insights\\\\components\\\\spatial-nav.tsx\")",
+      "Bash(while IFS='=' read -r key value)",
+      "Bash(do echo \"Adding $key...\")",
+      "Bash(echo:*)",
+      "Bash(done)",
+      "Bash(git rm:*)"
+    ]
+  }
+}

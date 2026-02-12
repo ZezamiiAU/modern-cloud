@@ -101,7 +101,6 @@ export {
 export {
   ZezamiiHeader,
   type ZezamiiHeaderProps,
-  type HealthPill,
 } from "./components/zezamii-header";
 
 // Identity Workstation (client components)

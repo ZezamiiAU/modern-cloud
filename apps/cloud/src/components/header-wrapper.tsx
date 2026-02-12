@@ -1,6 +1,7 @@
 "use client";
 
-import { ZezamiiHeader, type HealthPill } from "@repo/ui";
+import * as React from "react";
+import { ZezamiiHeader } from "@repo/ui";
 import { usePathname } from "next/navigation";
 
 interface HeaderWrapperProps {
@@ -11,68 +12,48 @@ interface HeaderWrapperProps {
   };
 }
 
-export function HeaderWrapper({ user }: HeaderWrapperProps) {
+export const HeaderWrapper = React.memo(function HeaderWrapper({ user }: HeaderWrapperProps) {
   const pathname = usePathname();
 
-  // Generate breadcrumbs based on pathname
-  const generateBreadcrumbs = () => {
+  // Memoize breadcrumbs based on pathname
+  const breadcrumbs = React.useMemo(() => {
     const segments = pathname.split("/").filter(Boolean);
-    const breadcrumbs = [
-      { label: "Cloud", href: "/dashboard" },
-    ];
+    const crumbs = [{ label: "Cloud", href: "/dashboard" }];
 
     if (segments.includes("people")) {
-      breadcrumbs.push({ label: "People" });
+      crumbs.push({ label: "People", href: "/dashboard/people" });
+    } else if (segments.includes("spatial-insights")) {
+      crumbs.push({ label: "Spatial Insights", href: "/spatial-insights" });
     } else if (segments.includes("spaces")) {
-      breadcrumbs.push({ label: "Spaces" });
+      crumbs.push({ label: "Spaces", href: "/spaces" });
     } else if (segments.includes("access")) {
-      breadcrumbs.push({ label: "Access" });
+      crumbs.push({ label: "Access", href: "/access" });
+    } else if (segments.includes("sites")) {
+      crumbs.push({ label: "Sites", href: "/spaces/sites" });
+    } else if (segments.includes("devices")) {
+      crumbs.push({ label: "Devices", href: "/spaces/devices" });
+    } else if (segments.includes("floorplan")) {
+      crumbs.push({ label: "Floor Plan", href: "/spaces/floorplan" });
     }
 
-    return breadcrumbs;
-  };
+    return crumbs;
+  }, [pathname]);
 
-  // Health Pills - These would come from your API/state management
-  const healthPills: HealthPill[] = [
-    {
-      id: "sites",
-      label: "Sites",
-      value: "12 Online",
-      status: "online",
-    },
-    {
-      id: "events",
-      label: "Events",
-      value: "247",
-      status: "active",
-      trend: "up",
-    },
-    {
-      id: "alerts",
-      label: "Alerts",
-      value: "2 Active",
-      status: "error",
-    },
-  ];
-
-  const handleSearch = (query: string) => {
+  const handleSearch = React.useCallback((query: string) => {
     console.log("Search query:", query);
-    // Implement global search functionality
-  };
+  }, []);
 
-  const handleOrganizationChange = () => {
+  const handleOrganizationChange = React.useCallback(() => {
     console.log("Organization change");
-    // Implement organization switching
-  };
+  }, []);
 
   return (
     <ZezamiiHeader
-      breadcrumbs={generateBreadcrumbs()}
-      healthPills={healthPills}
+      breadcrumbs={breadcrumbs}
       onSearch={handleSearch}
       organizationName="Zezamii"
       userName={user.name}
       onOrganizationChange={handleOrganizationChange}
     />
   );
-}
+});

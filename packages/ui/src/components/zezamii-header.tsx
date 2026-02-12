@@ -6,22 +6,12 @@ import {
   Zap,
   HelpCircle,
   ChevronDown,
-  TrendingUp,
   Building2,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
-export interface HealthPill {
-  id: string;
-  label: string;
-  value: string | number;
-  status: "online" | "active" | "warning" | "error";
-  trend?: "up" | "down" | "neutral";
-}
-
 export interface ZezamiiHeaderProps {
   breadcrumbs?: Array<{ label: string; href?: string }>;
-  healthPills?: HealthPill[];
   onSearch?: (query: string) => void;
   organizationName?: string;
   userName?: string;
@@ -29,59 +19,33 @@ export interface ZezamiiHeaderProps {
   className?: string;
 }
 
-export function ZezamiiHeader({
+export const ZezamiiHeader = React.memo(function ZezamiiHeader({
   breadcrumbs = [],
-  healthPills = [],
   onSearch,
   organizationName = "Organization",
-  userName: _userName = "User",
   onOrganizationChange,
   className,
 }: ZezamiiHeaderProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isSearchFocused, setIsSearchFocused] = React.useState(false);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    onSearch?.(e.target.value);
-  };
-
-  const getStatusDotClass = (status: HealthPill["status"]) => {
-    switch (status) {
-      case "online":
-        return "bg-green-500";
-      case "active":
-        return "bg-green-500";
-      case "warning":
-        return "bg-yellow-500";
-      case "error":
-        return "bg-red-500 animate-pulse";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getTrendIcon = (trend?: "up" | "down" | "neutral") => {
-    if (trend === "up") {
-      return <TrendingUp className="w-3 h-3 text-green-500" />;
-    }
-    if (trend === "down") {
-      return <TrendingUp className="w-3 h-3 text-red-500 rotate-180" />;
-    }
-    return null;
-  };
+  const handleSearchChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
+      onSearch?.(e.target.value);
+    },
+    [onSearch]
+  );
 
   return (
     <header
       className={cn(
-        "h-14 flex items-center justify-between px-6 border-b border-gray-200",
-        "backdrop-blur-md bg-white/80",
+        "h-14 flex items-center justify-between px-6 border-b border-gray-200 bg-white",
         className,
       )}
     >
-      {/* Left Section: Breadcrumbs + Health Pills */}
+      {/* Left Section: Breadcrumbs */}
       <div className="flex items-center gap-6">
-        {/* Breadcrumbs */}
         {breadcrumbs.length > 0 && (
           <nav className="flex items-center gap-2 text-sm">
             {breadcrumbs.map((crumb, index) => (
@@ -102,30 +66,6 @@ export function ZezamiiHeader({
               </React.Fragment>
             ))}
           </nav>
-        )}
-
-        {/* Health Pills */}
-        {healthPills.length > 0 && (
-          <div className="flex items-center gap-3">
-            {healthPills.map((pill) => (
-              <div
-                key={pill.id}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100/80 border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer"
-              >
-                <div
-                  className={cn(
-                    "w-2 h-2 rounded-full",
-                    getStatusDotClass(pill.status),
-                  )}
-                />
-                <span className="text-xs font-medium text-gray-700">
-                  {pill.label}:{" "}
-                  <span className="text-gray-900">{pill.value}</span>
-                </span>
-                {pill.trend && getTrendIcon(pill.trend)}
-              </div>
-            ))}
-          </div>
         )}
       </div>
 
@@ -187,4 +127,4 @@ export function ZezamiiHeader({
       </div>
     </header>
   );
-}
+});
