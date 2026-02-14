@@ -3,7 +3,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Plus, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import { cn } from "@repo/ui";
 import { SpaceNode } from "./space-node";
 import type { ZezamiiNode, NodeType, NodeStatus } from "../types";
 import type { Zone, Device, Transaction } from "@/contexts/site-context";
@@ -49,7 +48,7 @@ export function SpatialCanvas({
   selectedZoneId,
   onAddSpace,
   onNodeSelect,
-  onDeviceClick,
+  onDeviceClick: _onDeviceClick,
 }: SpatialCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [nodes, setNodes] = useState<ZezamiiNode[]>([]);
@@ -67,7 +66,9 @@ export function SpatialCanvas({
     }
 
     // Filter zones for current site and context
-    let relevantZones = zones.filter((z) => z.siteId === selectedSiteId && !z.isDefault);
+    let relevantZones = zones.filter(
+      (z) => z.siteId === selectedSiteId && !z.isDefault,
+    );
 
     if (selectedZoneId) {
       const selectedZone = zones.find((z) => z.id === selectedZoneId);
@@ -77,7 +78,7 @@ export function SpatialCanvas({
           const children = zones.filter((z) => z.parentId === parentId);
           return children.reduce(
             (acc, child) => [...acc, child, ...getDescendants(child.id)],
-            [] as Zone[]
+            [] as Zone[],
           );
         };
         relevantZones = [selectedZone, ...getDescendants(selectedZoneId)];
@@ -107,7 +108,7 @@ export function SpatialCanvas({
         // Get devices for this zone
         const zoneDevices = devices.filter((d) => d.zoneId === zone.id);
         const locks = zoneDevices.filter(
-          (d) => d.type === "digital-lock" || d.type === "access-reader"
+          (d) => d.type === "digital-lock" || d.type === "access-reader",
         ).length;
         const cameras = zoneDevices.filter((d) => d.type === "camera").length;
 
@@ -115,12 +116,16 @@ export function SpatialCanvas({
         const recentTransactions = transactions.filter(
           (t) =>
             zoneDevices.some((d) => d.id === t.assetId) &&
-            Date.now() - t.timestamp.getTime() < 5 * 60 * 1000
+            Date.now() - t.timestamp.getTime() < 5 * 60 * 1000,
         );
-        const hasRecentUnlock = recentTransactions.some((t) => t.type === "unlock");
+        const hasRecentUnlock = recentTransactions.some(
+          (t) => t.type === "unlock",
+        );
 
         // Determine status
-        const onlineDevices = zoneDevices.filter((d) => d.status === "online").length;
+        const onlineDevices = zoneDevices.filter(
+          (d) => d.status === "online",
+        ).length;
         const totalDevices = zoneDevices.length;
         let status: NodeStatus = "active";
         if (totalDevices > 0) {
@@ -135,7 +140,10 @@ export function SpatialCanvas({
         let xPos = zone.coordinates?.x ?? 0;
         let yPos = zone.coordinates?.y ?? 0;
 
-        if (zone.coordinates?.x === undefined || zone.coordinates?.y === undefined) {
+        if (
+          zone.coordinates?.x === undefined ||
+          zone.coordinates?.y === undefined
+        ) {
           // Calculate position based on type and index
           const typeIndex =
             nodesByType[zone.type]?.findIndex((z) => z.id === zone.id) ?? index;
@@ -181,7 +189,7 @@ export function SpatialCanvas({
       setSelectedNodeId(id);
       onNodeSelect(id);
     },
-    [onNodeSelect]
+    [onNodeSelect],
   );
 
   // Handle drag start
@@ -202,21 +210,21 @@ export function SpatialCanvas({
                   y: Math.max(0, position.y),
                 },
               }
-            : node
-        )
+            : node,
+        ),
       );
       setDraggingNodeId(null);
       setDragOverNodeId(null);
     },
-    []
+    [],
   );
 
   // Handle drop for nesting
   const handleDrop = useCallback((targetId: string, droppedId: string) => {
     setNodes((prev) =>
       prev.map((node) =>
-        node.id === droppedId ? { ...node, parentId: targetId } : node
-      )
+        node.id === droppedId ? { ...node, parentId: targetId } : node,
+      ),
     );
   }, []);
 
@@ -225,7 +233,7 @@ export function SpatialCanvas({
     (targetType: NodeType, droppedType: NodeType): boolean => {
       return validNesting[targetType]?.includes(droppedType) ?? false;
     },
-    []
+    [],
   );
 
   // Get dragged node type
@@ -363,7 +371,10 @@ export function SpatialCanvas({
         />
 
         {/* Connection lines between parent/child nodes */}
-        <svg className="absolute inset-0 pointer-events-none" style={{ overflow: "visible" }}>
+        <svg
+          className="absolute inset-0 pointer-events-none"
+          style={{ overflow: "visible" }}
+        >
           {nodes.map((node) => {
             if (!node.parentId) return null;
             const parent = nodes.find((n) => n.id === node.parentId);

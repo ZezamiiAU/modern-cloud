@@ -20,9 +20,17 @@ import {
   Check,
 } from "lucide-react";
 import { cn, Button } from "@repo/ui";
-import { useSiteContext, type Device, type Zone, ZONE_TYPE_LABELS } from "@/contexts/site-context";
+import {
+  useSiteContext,
+  type Device,
+  type Zone,
+  ZONE_TYPE_LABELS,
+} from "@/contexts/site-context";
 
-const deviceTypeIcons: Record<Device["type"], React.ComponentType<{ className?: string }>> = {
+const deviceTypeIcons: Record<
+  Device["type"],
+  React.ComponentType<{ className?: string }>
+> = {
   "digital-lock": Lock,
   "access-reader": Radio,
   gateway: Router,
@@ -40,7 +48,13 @@ const deviceTypeLabels: Record<Device["type"], string> = {
   camera: "Camera",
 };
 
-function DeviceTypeIcon({ type, className }: { type: Device["type"]; className?: string }) {
+function DeviceTypeIcon({
+  type,
+  className,
+}: {
+  type: Device["type"];
+  className?: string;
+}) {
   const Icon = deviceTypeIcons[type];
   return <Icon className={className} />;
 }
@@ -92,10 +106,18 @@ function ZoneCard({
 
   // Depth-based styling
   const depthColors = [
-    { border: "border-indigo-300", bg: "bg-indigo-50", header: "bg-indigo-100" },
+    {
+      border: "border-indigo-300",
+      bg: "bg-indigo-50",
+      header: "bg-indigo-100",
+    },
     { border: "border-blue-300", bg: "bg-blue-50", header: "bg-blue-100" },
     { border: "border-teal-300", bg: "bg-teal-50", header: "bg-teal-100" },
-    { border: "border-purple-300", bg: "bg-purple-50", header: "bg-purple-100" },
+    {
+      border: "border-purple-300",
+      bg: "bg-purple-50",
+      header: "bg-purple-100",
+    },
     { border: "border-pink-300", bg: "bg-pink-50", header: "bg-pink-100" },
   ] as const;
   const depthStyle = depthColors[depth % depthColors.length] ?? depthColors[0];
@@ -107,11 +129,15 @@ function ZoneCard({
         isSelected
           ? "border-indigo-500 ring-2 ring-indigo-200"
           : isDragOver
-          ? "border-green-500 bg-green-50 shadow-lg"
-          : depthStyle.border,
-        zone.color && !isSelected && !isDragOver ? "" : ""
+            ? "border-green-500 bg-green-50 shadow-lg"
+            : depthStyle.border,
+        zone.color && !isSelected && !isDragOver ? "" : "",
       )}
-      style={zone.color && !isSelected && !isDragOver ? { borderColor: zone.color } : undefined}
+      style={
+        zone.color && !isSelected && !isDragOver
+          ? { borderColor: zone.color }
+          : undefined
+      }
     >
       {/* Zone Header */}
       <div
@@ -121,9 +147,17 @@ function ZoneCard({
         onDrop={(e) => handleDrop(e, zone.id)}
         className={cn(
           "px-4 py-3 flex items-center justify-between cursor-pointer rounded-t-lg",
-          isSelected ? "bg-indigo-100" : isDragOver ? "bg-green-100" : depthStyle.header
+          isSelected
+            ? "bg-indigo-100"
+            : isDragOver
+              ? "bg-green-100"
+              : depthStyle.header,
         )}
-        style={zone.color && !isSelected && !isDragOver ? { backgroundColor: `${zone.color}20` } : undefined}
+        style={
+          zone.color && !isSelected && !isDragOver
+            ? { backgroundColor: `${zone.color}20` }
+            : undefined
+        }
       >
         <div className="flex items-center gap-2">
           {hasChildren && (
@@ -137,14 +171,16 @@ function ZoneCard({
               <ChevronRight
                 className={cn(
                   "w-4 h-4 transition-transform",
-                  isExpanded && "rotate-90"
+                  isExpanded && "rotate-90",
                 )}
               />
             </button>
           )}
           <h4 className="font-medium text-sm">{zone.name}</h4>
           {zone.description && (
-            <span className="text-xs text-muted-foreground">- {zone.description}</span>
+            <span className="text-xs text-muted-foreground">
+              - {zone.description}
+            </span>
           )}
         </div>
         <div className="flex items-center gap-2">
@@ -161,10 +197,7 @@ function ZoneCard({
 
       {/* Zone Content */}
       <div
-        className={cn(
-          "p-4",
-          isDragOver ? "bg-green-50/50" : depthStyle.bg
-        )}
+        className={cn("p-4", isDragOver ? "bg-green-50/50" : depthStyle.bg)}
         onDragOver={(e) => handleDragOver(e, zone.id)}
         onDragLeave={handleDragLeave}
         onDrop={(e) => handleDrop(e, zone.id)}
@@ -172,7 +205,9 @@ function ZoneCard({
         {/* Drop zone indicator */}
         {isDragOver && (
           <div className="flex items-center justify-center py-3 mb-3 border-2 border-dashed border-green-400 rounded-lg bg-green-100">
-            <p className="text-sm text-green-700 font-medium">Drop device here</p>
+            <p className="text-sm text-green-700 font-medium">
+              Drop device here
+            </p>
           </div>
         )}
 
@@ -194,7 +229,8 @@ function ZoneCard({
                   device.status === "online"
                     ? "bg-green-100 hover:bg-green-200"
                     : "bg-gray-200 hover:bg-gray-300",
-                  recentlyDropped === device.id && "ring-2 ring-green-500 ring-offset-1"
+                  recentlyDropped === device.id &&
+                    "ring-2 ring-green-500 ring-offset-1",
                 )}
               >
                 {recentlyDropped === device.id ? (
@@ -203,7 +239,9 @@ function ZoneCard({
                   <span
                     className={cn(
                       "w-2 h-2 rounded-full",
-                      device.status === "online" ? "bg-green-500" : "bg-gray-400"
+                      device.status === "online"
+                        ? "bg-green-500"
+                        : "bg-gray-400",
                     )}
                   />
                 )}
@@ -255,7 +293,6 @@ function ZoneCard({
 export default function FloorplanPage() {
   const {
     selectedSiteId,
-    selectedSite,
     getZonesForSite,
     getRootZones,
     getChildZones,
@@ -265,11 +302,21 @@ export default function FloorplanPage() {
     assignDeviceToZone,
   } = useSiteContext();
 
-  const [selectedZoneId, setSelectedZoneId] = React.useState<string | null>(null);
-  const [dragOverZoneId, setDragOverZoneId] = React.useState<string | null>(null);
-  const [draggingDeviceId, setDraggingDeviceId] = React.useState<string | null>(null);
-  const [recentlyDropped, setRecentlyDropped] = React.useState<string | null>(null);
-  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(new Set());
+  const [selectedZoneId, setSelectedZoneId] = React.useState<string | null>(
+    null,
+  );
+  const [dragOverZoneId, setDragOverZoneId] = React.useState<string | null>(
+    null,
+  );
+  const [draggingDeviceId, setDraggingDeviceId] = React.useState<string | null>(
+    null,
+  );
+  const [recentlyDropped, setRecentlyDropped] = React.useState<string | null>(
+    null,
+  );
+  const [expandedZones, setExpandedZones] = React.useState<Set<string>>(
+    new Set(),
+  );
 
   // Get zones for the selected site (excluding default "Common Area" for cleaner display)
   const zones = React.useMemo(() => {
@@ -371,9 +418,12 @@ export default function FloorplanPage() {
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 flex items-center justify-center">
             <MapPin className="w-8 h-8 text-indigo-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Select a Site</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Select a Site
+          </h2>
           <p className="text-gray-600 mb-6">
-            Choose a site from the breadcrumb above to view its floor plan and manage spaces.
+            Choose a site from the breadcrumb above to view its floor plan and
+            manage spaces.
           </p>
           <Link href="/spaces/sites">
             <Button>
@@ -420,9 +470,12 @@ export default function FloorplanPage() {
                 <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
                   <Layers className="w-10 h-10 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Zones Defined</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No Zones Defined
+                </h3>
                 <p className="text-gray-600 mb-4 max-w-sm">
-                  Create zones to organize your site. Drag devices from the sidebar to place them on the map.
+                  Create zones to organize your site. Drag devices from the
+                  sidebar to place them on the map.
                 </p>
                 <Button>
                   <Plus className="w-4 h-4 mr-2" />
@@ -482,7 +535,7 @@ export default function FloorplanPage() {
       <div
         className={cn(
           "w-72 bg-white rounded-lg border shadow-sm flex flex-col transition-all",
-          draggingDeviceId && "ring-2 ring-orange-300"
+          draggingDeviceId && "ring-2 ring-orange-300",
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -508,7 +561,9 @@ export default function FloorplanPage() {
               <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">All devices are placed</p>
               {draggingDeviceId && (
-                <p className="text-xs mt-2 text-orange-600">Drop here to unassign</p>
+                <p className="text-xs mt-2 text-orange-600">
+                  Drop here to unassign
+                </p>
               )}
             </div>
           ) : (
@@ -526,27 +581,35 @@ export default function FloorplanPage() {
                     draggingDeviceId === device.id
                       ? "opacity-50 cursor-grabbing scale-95"
                       : "cursor-grab",
-                    device.status === "offline" && "opacity-60"
+                    device.status === "offline" && "opacity-60",
                   )}
                 >
                   <GripVertical className="w-4 h-4 text-gray-400" />
                   <div
                     className={cn(
                       "w-8 h-8 rounded flex items-center justify-center",
-                      device.status === "online" ? "bg-blue-100" : "bg-gray-100"
+                      device.status === "online"
+                        ? "bg-blue-100"
+                        : "bg-gray-100",
                     )}
                   >
                     <DeviceTypeIcon
                       type={device.type}
                       className={cn(
                         "w-4 h-4",
-                        device.status === "online" ? "text-blue-600" : "text-gray-400"
+                        device.status === "online"
+                          ? "text-blue-600"
+                          : "text-gray-400",
                       )}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{device.name}</p>
-                    <p className="text-xs text-muted-foreground">{deviceTypeLabels[device.type]}</p>
+                    <p className="text-sm font-medium truncate">
+                      {device.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {deviceTypeLabels[device.type]}
+                    </p>
                   </div>
                   <ChevronRight className="w-4 h-4 text-gray-400" />
                 </div>

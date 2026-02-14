@@ -2,7 +2,14 @@
 
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Building2, Layers, DoorOpen, Lock, Camera, GripVertical } from "lucide-react";
+import {
+  Building2,
+  Layers,
+  DoorOpen,
+  Lock,
+  Camera,
+  GripVertical,
+} from "lucide-react";
 import { cn } from "@repo/ui";
 import type { ZezamiiNode, NodeType } from "../types";
 
@@ -24,7 +31,10 @@ const nodeIcons: Record<NodeType, typeof Building2> = {
   Room: DoorOpen,
 };
 
-const nodeColors: Record<NodeType, { bg: string; border: string; icon: string }> = {
+const nodeColors: Record<
+  NodeType,
+  { bg: string; border: string; icon: string }
+> = {
   Building: {
     bg: "bg-indigo-500/10",
     border: "border-indigo-500/40",
@@ -55,7 +65,7 @@ export const SpaceNode = memo(function SpaceNode({
   onSelect,
   onDragStart,
   onDragEnd,
-  onDrop,
+  onDrop: _onDrop,
   canAcceptDrop,
   draggedNodeType,
 }: SpaceNodeProps) {
@@ -92,10 +102,15 @@ export const SpaceNode = memo(function SpaceNode({
         "transition-all duration-200",
         colors.bg,
         colors.border,
-        isSelected && "ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900",
-        isDragOver && canBeDropTarget && "ring-2 ring-green-500 ring-offset-2 ring-offset-slate-900 border-green-500",
-        isDragOver && !canBeDropTarget && "ring-2 ring-red-500/50 ring-offset-2 ring-offset-slate-900",
-        node.isPulsing && "animate-pulse"
+        isSelected &&
+          "ring-2 ring-cyan-500 ring-offset-2 ring-offset-slate-900",
+        isDragOver &&
+          canBeDropTarget &&
+          "ring-2 ring-green-500 ring-offset-2 ring-offset-slate-900 border-green-500",
+        isDragOver &&
+          !canBeDropTarget &&
+          "ring-2 ring-red-500/50 ring-offset-2 ring-offset-slate-900",
+        node.isPulsing && "animate-pulse",
       )}
       style={{ zIndex: isSelected ? 50 : 10 }}
       whileHover={{ scale: 1.02 }}
@@ -124,11 +139,18 @@ export const SpaceNode = memo(function SpaceNode({
               <Icon className={cn("w-4 h-4", colors.icon)} />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-slate-100">{node.name}</h3>
+              <h3 className="text-sm font-semibold text-slate-100">
+                {node.name}
+              </h3>
               <span className="text-xs text-slate-400">{node.type}</span>
             </div>
           </div>
-          <div className={cn("w-2.5 h-2.5 rounded-full", statusColors[node.status])} />
+          <div
+            className={cn(
+              "w-2.5 h-2.5 rounded-full",
+              statusColors[node.status],
+            )}
+          />
         </div>
 
         {/* Assets - Device Health Badges */}

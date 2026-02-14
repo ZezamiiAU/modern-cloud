@@ -98,7 +98,7 @@ function SiteStatusBadge({ status }: { status: Site["status"] }) {
           "text-xs font-medium uppercase",
           status === "online" && "text-green-700",
           status === "offline" && "text-gray-500",
-          status === "maintenance" && "text-yellow-700"
+          status === "maintenance" && "text-yellow-700",
         )}
       >
         {statusTextMap[status]}
@@ -109,33 +109,68 @@ function SiteStatusBadge({ status }: { status: Site["status"] }) {
 
 // Mock activity events generator
 function generateMockActivity(siteId: string): ActivityEvent[] {
-  const types: Array<"access" | "rooms" | "lockers" | "bookings" | "vision" | "cloud"> = [
-    "access",
-    "rooms",
-    "lockers",
-    "bookings",
-    "vision",
-    "cloud",
-  ];
+  const types: Array<
+    "access" | "rooms" | "lockers" | "bookings" | "vision" | "cloud"
+  > = ["access", "rooms", "lockers", "bookings", "vision", "cloud"];
 
   const actions = {
-    access: ["Door unlocked", "Door locked", "Access denied", "Visitor checked in"],
+    access: [
+      "Door unlocked",
+      "Door locked",
+      "Access denied",
+      "Visitor checked in",
+    ],
     rooms: ["Room booked", "Room released", "Meeting started", "Meeting ended"],
-    lockers: ["Locker accessed", "Locker assigned", "Locker released", "Item stored"],
-    bookings: ["Desk reserved", "Desk released", "Parking booked", "Resource allocated"],
-    vision: ["Motion detected", "Camera online", "Recording started", "Alert triggered"],
-    cloud: ["Config updated", "Firmware upgraded", "Device synced", "Backup completed"],
+    lockers: [
+      "Locker accessed",
+      "Locker assigned",
+      "Locker released",
+      "Item stored",
+    ],
+    bookings: [
+      "Desk reserved",
+      "Desk released",
+      "Parking booked",
+      "Resource allocated",
+    ],
+    vision: [
+      "Motion detected",
+      "Camera online",
+      "Recording started",
+      "Alert triggered",
+    ],
+    cloud: [
+      "Config updated",
+      "Firmware upgraded",
+      "Device synced",
+      "Backup completed",
+    ],
   };
 
-  const zones = ["Main Entrance", "Floor 1", "Floor 2", "Parking", "Reception", "Server Room"];
-  const devices = ["Door Controller 01", "Card Reader 05", "Camera 12", "Locker Panel A", "Kiosk 3"];
+  const zones = [
+    "Main Entrance",
+    "Floor 1",
+    "Floor 2",
+    "Parking",
+    "Reception",
+    "Server Room",
+  ];
+  const devices = [
+    "Door Controller 01",
+    "Card Reader 05",
+    "Camera 12",
+    "Locker Panel A",
+    "Kiosk 3",
+  ];
 
   const events: ActivityEvent[] = [];
 
   for (let i = 0; i < 50; i++) {
     const type = types[Math.floor(Math.random() * types.length)] ?? "access";
     const typeActions = actions[type];
-    const action = typeActions[Math.floor(Math.random() * typeActions.length)] ?? "Access granted";
+    const action =
+      typeActions[Math.floor(Math.random() * typeActions.length)] ??
+      "Access granted";
     const hoursAgo = Math.floor(Math.random() * 24 * 7);
 
     events.push({
@@ -144,8 +179,14 @@ function generateMockActivity(siteId: string): ActivityEvent[] {
       action,
       description: `${action} at site`,
       timestamp: new Date(Date.now() - 1000 * 60 * 60 * hoursAgo),
-      location: Math.random() > 0.5 ? zones[Math.floor(Math.random() * zones.length)] : undefined,
-      device: Math.random() > 0.5 ? devices[Math.floor(Math.random() * devices.length)] : undefined,
+      location:
+        Math.random() > 0.5
+          ? zones[Math.floor(Math.random() * zones.length)]
+          : undefined,
+      device:
+        Math.random() > 0.5
+          ? devices[Math.floor(Math.random() * devices.length)]
+          : undefined,
     });
   }
 
@@ -153,10 +194,11 @@ function generateMockActivity(siteId: string): ActivityEvent[] {
 }
 
 export default function SitesPage() {
-  const { sites, selectedSiteId, selectSite, addSite, getDevicesForSite, getZonesForSite } = useSiteContext();
+  const { sites, selectedSiteId, addSite } = useSiteContext();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [searchDebounce, setSearchDebounce] = React.useState("");
   const [filters, setFilters] = React.useState<{
@@ -166,8 +208,11 @@ export default function SitesPage() {
   }>({});
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [selectedSiteForDrawer, setSelectedSiteForDrawer] = React.useState<Site | null>(null);
-  const [activityEvents, setActivityEvents] = React.useState<ActivityEvent[]>([]);
+  const [selectedSiteForDrawer, setSelectedSiteForDrawer] =
+    React.useState<Site | null>(null);
+  const [activityEvents, setActivityEvents] = React.useState<ActivityEvent[]>(
+    [],
+  );
   const [activityLoading, setActivityLoading] = React.useState(false);
 
   const [addSiteModalOpen, setAddSiteModalOpen] = React.useState(false);
@@ -188,11 +233,11 @@ export default function SitesPage() {
 
   const regions = React.useMemo(
     () => Array.from(new Set(sites.map((s) => s.region))).sort(),
-    [sites]
+    [sites],
   );
   const types = React.useMemo(
     () => Array.from(new Set(sites.map((s) => s.type))).sort(),
-    [sites]
+    [sites],
   );
   const statuses = [
     { value: "online", label: "Online" },
@@ -339,7 +384,9 @@ export default function SitesPage() {
       {
         id: "activity",
         header: "Activity (7d)",
-        cell: ({ row }) => <BehavioralSparkline data={row.original.activitySparkline} />,
+        cell: ({ row }) => (
+          <BehavioralSparkline data={row.original.activitySparkline} />
+        ),
         size: 120,
       },
       {
@@ -362,7 +409,9 @@ export default function SitesPage() {
         cell: ({ row }) => {
           const event = row.original.lastEvent;
           if (!event) {
-            return <span className="text-muted-foreground text-xs">No activity</span>;
+            return (
+              <span className="text-muted-foreground text-xs">No activity</span>
+            );
           }
 
           const Icon = productIconMap[event.type];
@@ -388,12 +437,14 @@ export default function SitesPage() {
         size: 180,
       },
     ],
-    []
+    [],
   );
 
   // Filter sites based on selected site context and local filters
   const filteredSites = React.useMemo(() => {
-    let result = selectedSiteId ? sites.filter((s) => s.id === selectedSiteId) : sites;
+    let result = selectedSiteId
+      ? sites.filter((s) => s.id === selectedSiteId)
+      : sites;
 
     if (filters.region) {
       result = result.filter((s) => s.region === filters.region);
@@ -410,7 +461,7 @@ export default function SitesPage() {
         (s) =>
           s.name.toLowerCase().includes(query) ||
           s.address.toLowerCase().includes(query) ||
-          s.region.toLowerCase().includes(query)
+          s.region.toLowerCase().includes(query),
       );
     }
 
@@ -450,7 +501,15 @@ export default function SitesPage() {
     const data = filteredSites;
 
     if (format === "csv") {
-      const headers = ["Name", "Address", "Region", "Type", "Status", "Devices", "Zones"];
+      const headers = [
+        "Name",
+        "Address",
+        "Region",
+        "Type",
+        "Status",
+        "Devices",
+        "Zones",
+      ];
       const rows = data.map((s) => [
         s.name,
         s.address,
@@ -548,7 +607,9 @@ export default function SitesPage() {
               {/* Filters */}
               <Select
                 value={filters.region || "all"}
-                onValueChange={(value) => handleFilterChange("region", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("region", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Regions" />
@@ -565,7 +626,9 @@ export default function SitesPage() {
 
               <Select
                 value={filters.type || "all"}
-                onValueChange={(value) => handleFilterChange("type", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("type", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Types" />
@@ -582,7 +645,9 @@ export default function SitesPage() {
 
               <Select
                 value={filters.status || "all"}
-                onValueChange={(value) => handleFilterChange("status", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("status", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[150px]">
                   <SelectValue placeholder="All Statuses" />
@@ -652,9 +717,15 @@ export default function SitesPage() {
               <div className="flex items-center gap-2">
                 <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""} active
+                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""}{" "}
+                  active
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 px-2 text-xs">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="h-7 px-2 text-xs"
+                >
                   Clear all
                 </Button>
 
@@ -686,7 +757,9 @@ export default function SitesPage() {
                   {filters.status && (
                     <div className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-xs">
                       <span className="text-muted-foreground">Status:</span>
-                      <span className="font-medium capitalize">{filters.status}</span>
+                      <span className="font-medium capitalize">
+                        {filters.status}
+                      </span>
                       <button
                         onClick={() => handleFilterChange("status", null)}
                         className="ml-1 text-muted-foreground hover:text-foreground"
@@ -715,7 +788,10 @@ export default function SitesPage() {
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </th>
                   ))}
                 </tr>
@@ -724,7 +800,10 @@ export default function SitesPage() {
             <tbody className="divide-y">
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-muted-foreground">
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-12 text-center text-muted-foreground"
+                  >
                     No sites found
                   </td>
                 </tr>
@@ -737,7 +816,10 @@ export default function SitesPage() {
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3 text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -750,7 +832,10 @@ export default function SitesPage() {
 
       {/* Site Detail Drawer */}
       {selectedSiteForDrawer && (
-        <Sheet open={drawerOpen} onOpenChange={(open) => !open && setDrawerOpen(false)}>
+        <Sheet
+          open={drawerOpen}
+          onOpenChange={(open) => !open && setDrawerOpen(false)}
+        >
           <SheetContent side="right" className="w-full sm:max-w-[560px] p-0">
             <div className="flex flex-col h-full">
               <div className="border-b border-gray-200 p-6">
@@ -760,7 +845,9 @@ export default function SitesPage() {
                       <Building2 className="h-8 w-8 text-indigo-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <SheetTitle className="text-xl mb-1">{selectedSiteForDrawer.name}</SheetTitle>
+                      <SheetTitle className="text-xl mb-1">
+                        {selectedSiteForDrawer.name}
+                      </SheetTitle>
                       <SheetDescription className="text-sm text-muted-foreground mb-2 flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5" />
                         {selectedSiteForDrawer.address}
@@ -770,23 +857,31 @@ export default function SitesPage() {
                         <span>•</span>
                         <span>{selectedSiteForDrawer.type}</span>
                         <span>•</span>
-                        <SiteStatusBadge status={selectedSiteForDrawer.status} />
+                        <SiteStatusBadge
+                          status={selectedSiteForDrawer.status}
+                        />
                       </div>
                     </div>
                   </div>
                 </SheetHeader>
 
                 <div className="mt-4 pt-4 border-t border-gray-100">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-2">Site Overview</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                    Site Overview
+                  </h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-gray-50 rounded-lg px-3 py-2">
-                      <p className="text-xs text-muted-foreground mb-0.5">Devices</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        Devices
+                      </p>
                       <p className="text-lg font-semibold text-gray-900">
                         {selectedSiteForDrawer.devicesCount}
                       </p>
                     </div>
                     <div className="bg-gray-50 rounded-lg px-3 py-2">
-                      <p className="text-xs text-muted-foreground mb-0.5">Zones</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">
+                        Zones
+                      </p>
                       <p className="text-lg font-semibold text-gray-900">
                         {selectedSiteForDrawer.zonesCount}
                       </p>
@@ -797,7 +892,9 @@ export default function SitesPage() {
 
               <div className="flex-1 overflow-y-auto">
                 <div className="p-6">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-4">Activity Timeline</h3>
+                  <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                    Activity Timeline
+                  </h3>
                   <ActivityTimeline
                     events={activityEvents}
                     loading={activityLoading}
@@ -815,7 +912,8 @@ export default function SitesPage() {
           <SheetHeader>
             <SheetTitle>Add New Site</SheetTitle>
             <SheetDescription>
-              Create a new site to manage devices and zones. A default &quot;Common Area&quot; zone will be automatically created.
+              Create a new site to manage devices and zones. A default
+              &quot;Common Area&quot; zone will be automatically created.
             </SheetDescription>
           </SheetHeader>
 
@@ -825,7 +923,9 @@ export default function SitesPage() {
               <Input
                 placeholder="e.g., Sydney Headquarters"
                 value={newSiteForm.name}
-                onChange={(e) => setNewSiteForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setNewSiteForm((prev) => ({ ...prev, name: e.target.value }))
+                }
               />
             </div>
 
@@ -834,7 +934,12 @@ export default function SitesPage() {
               <Input
                 placeholder="e.g., 123 George Street, Sydney NSW 2000"
                 value={newSiteForm.address}
-                onChange={(e) => setNewSiteForm((prev) => ({ ...prev, address: e.target.value }))}
+                onChange={(e) =>
+                  setNewSiteForm((prev) => ({
+                    ...prev,
+                    address: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -842,7 +947,9 @@ export default function SitesPage() {
               <label className="text-sm font-medium">Region</label>
               <Select
                 value={newSiteForm.region}
-                onValueChange={(value) => setNewSiteForm((prev) => ({ ...prev, region: value }))}
+                onValueChange={(value) =>
+                  setNewSiteForm((prev) => ({ ...prev, region: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -859,7 +966,9 @@ export default function SitesPage() {
               <label className="text-sm font-medium">Site Type</label>
               <Select
                 value={newSiteForm.type}
-                onValueChange={(value) => setNewSiteForm((prev) => ({ ...prev, type: value }))}
+                onValueChange={(value) =>
+                  setNewSiteForm((prev) => ({ ...prev, type: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -874,7 +983,11 @@ export default function SitesPage() {
             </div>
 
             <div className="pt-4 flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setAddSiteModalOpen(false)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setAddSiteModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button

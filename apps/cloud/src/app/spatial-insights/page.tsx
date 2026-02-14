@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Plus, Lock, Camera, DoorOpen, LayoutGrid, Network } from "lucide-react";
+import { Plus, DoorOpen, LayoutGrid, Network } from "lucide-react";
 import { cn } from "@repo/ui";
 import {
   useSiteContext,
@@ -37,7 +37,7 @@ interface ZezamiiSpace {
 // Generate mock transactions for a space
 function generateSpaceTransactions(
   spaceId: string,
-  deviceIds: string[]
+  deviceIds: string[],
 ): Transaction[] {
   const types: TransactionType[] = ["access", "unlock", "lock", "alarm"];
   const statuses: TransactionStatus[] = ["success", "denied", "error"];
@@ -52,7 +52,7 @@ function generateSpaceTransactions(
   const transactions: Transaction[] = [];
   const numTransactions = Math.min(
     5,
-    Math.max(2, Math.floor(Math.random() * 8))
+    Math.max(2, Math.floor(Math.random() * 8)),
   );
 
   for (let i = 0; i < numTransactions; i++) {
@@ -85,14 +85,14 @@ function generateSpaceTransactions(
   }
 
   return transactions.sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
   );
 }
 
 // Generate mock transactions for all zones (used by canvas)
 function generateAllTransactions(
   zones: Zone[],
-  devices: Device[]
+  devices: Device[],
 ): Transaction[] {
   const allTransactions: Transaction[] = [];
 
@@ -107,8 +107,15 @@ function generateAllTransactions(
 
     for (let i = 0; i < numTransactions; i++) {
       const type = types[Math.floor(Math.random() * types.length)] ?? "access";
-      const status = Math.random() > 0.2 ? "success" : (statuses[Math.floor(Math.random() * statuses.length)] ?? "success");
-      const deviceId = deviceIds.length > 0 ? (deviceIds[Math.floor(Math.random() * deviceIds.length)] ?? zone.id) : zone.id;
+      const status =
+        Math.random() > 0.2
+          ? "success"
+          : (statuses[Math.floor(Math.random() * statuses.length)] ??
+            "success");
+      const deviceId =
+        deviceIds.length > 0
+          ? (deviceIds[Math.floor(Math.random() * deviceIds.length)] ?? zone.id)
+          : zone.id;
 
       allTransactions.push({
         id: `txn-${zone.id}-${i}-${Date.now()}`,
@@ -141,7 +148,7 @@ export default function SpatialInsightsPage() {
   const [assignDeviceOpen, setAssignDeviceOpen] = useState(false);
   const [selectedSpaceForAssignment, setSelectedSpaceForAssignment] =
     useState<Zone | null>(null);
-  const [selectedCanvasNodeId, setSelectedCanvasNodeId] = useState<
+  const [_selectedCanvasNodeId, setSelectedCanvasNodeId] = useState<
     string | null
   >(null);
 
@@ -201,7 +208,7 @@ export default function SpatialInsightsPage() {
         (z) =>
           z.siteId === selectedSiteId &&
           (z.type === "room" || z.type === "area") &&
-          !z.isDefault
+          !z.isDefault,
       );
     }
 
@@ -209,7 +216,7 @@ export default function SpatialInsightsPage() {
     return displayZones.map((zone): ZezamiiSpace => {
       const zoneDevices = devices.filter((d) => d.zoneId === zone.id);
       const locks = zoneDevices.filter(
-        (d) => d.type === "digital-lock" || d.type === "access-reader"
+        (d) => d.type === "digital-lock" || d.type === "access-reader",
       );
       const cameras = zoneDevices.filter((d) => d.type === "camera");
       const deviceIds = zoneDevices.map((d) => d.id);
@@ -257,7 +264,11 @@ export default function SpatialInsightsPage() {
   }, []);
 
   const handleSpaceCreated = useCallback(
-    (name: string, type: "building" | "floor" | "room" | "area", parentId?: string) => {
+    (
+      name: string,
+      type: "building" | "floor" | "room" | "area",
+      parentId?: string,
+    ) => {
       if (!selectedSiteId) return;
 
       addZone({
@@ -268,7 +279,7 @@ export default function SpatialInsightsPage() {
       });
       setAddSpaceOpen(false);
     },
-    [addZone, selectedSiteId, selectedZoneId]
+    [addZone, selectedSiteId, selectedZoneId],
   );
 
   const handleDeviceAssigned = useCallback(
@@ -278,7 +289,7 @@ export default function SpatialInsightsPage() {
       setAssignDeviceOpen(false);
       setSelectedSpaceForAssignment(null);
     },
-    [assignDeviceToZone, selectedSpaceForAssignment]
+    [assignDeviceToZone, selectedSpaceForAssignment],
   );
 
   const handleCanvasNodeSelect = useCallback((nodeId: string | null) => {
@@ -311,7 +322,7 @@ export default function SpatialInsightsPage() {
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                   layoutMode === "canvas"
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-400 hover:text-slate-100"
+                    : "text-slate-400 hover:text-slate-100",
                 )}
               >
                 <Network className="w-4 h-4" />
@@ -323,7 +334,7 @@ export default function SpatialInsightsPage() {
                   "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
                   layoutMode === "grid"
                     ? "bg-cyan-500 text-white"
-                    : "text-slate-400 hover:text-slate-100"
+                    : "text-slate-400 hover:text-slate-100",
                 )}
               >
                 <LayoutGrid className="w-4 h-4" />

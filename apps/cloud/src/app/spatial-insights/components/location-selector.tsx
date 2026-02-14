@@ -2,8 +2,15 @@
 
 import { memo, useMemo } from "react";
 import { ChevronDown, MapPin, Building2, Layers } from "lucide-react";
-import { cn, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui";
-import { useSiteContext, type Site, type Zone } from "@/contexts/site-context";
+import {
+  cn,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui";
+import { useSiteContext } from "@/contexts/site-context";
 
 interface LocationSelectorProps {
   className?: string;
@@ -25,7 +32,8 @@ export const LocationSelector = memo(function LocationSelector({
   const buildings = useMemo(() => {
     if (!selectedSiteId) return [];
     return zones.filter(
-      (z) => z.siteId === selectedSiteId && z.type === "building" && !z.isDefault
+      (z) =>
+        z.siteId === selectedSiteId && z.type === "building" && !z.isDefault,
     );
   }, [zones, selectedSiteId]);
 
@@ -50,7 +58,8 @@ export const LocationSelector = memo(function LocationSelector({
   const floors = useMemo(() => {
     if (!selectedBuildingId) return [];
     return zones.filter(
-      (z) => z.parentId === selectedBuildingId && z.type === "floor" && !z.isDefault
+      (z) =>
+        z.parentId === selectedBuildingId && z.type === "floor" && !z.isDefault,
     );
   }, [zones, selectedBuildingId]);
 
@@ -107,7 +116,7 @@ export const LocationSelector = memo(function LocationSelector({
                         ? "bg-green-500"
                         : site.status === "maintenance"
                           ? "bg-yellow-500"
-                          : "bg-red-500"
+                          : "bg-red-500",
                     )}
                   />
                   {site.name}
@@ -130,7 +139,11 @@ export const LocationSelector = memo(function LocationSelector({
           disabled={!selectedSiteId || buildings.length === 0}
         >
           <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-slate-100 focus:ring-cyan-500 disabled:opacity-50">
-            <SelectValue placeholder={selectedSiteId ? "Select Building" : "Select a site first"} />
+            <SelectValue
+              placeholder={
+                selectedSiteId ? "Select Building" : "Select a site first"
+              }
+            />
           </SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-700">
             {buildings.map((building) => (
@@ -158,7 +171,11 @@ export const LocationSelector = memo(function LocationSelector({
           disabled={!selectedBuildingId || floors.length === 0}
         >
           <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-slate-100 focus:ring-cyan-500 disabled:opacity-50">
-            <SelectValue placeholder={selectedBuildingId ? "Select Floor" : "Select a building first"} />
+            <SelectValue
+              placeholder={
+                selectedBuildingId ? "Select Floor" : "Select a building first"
+              }
+            />
           </SelectTrigger>
           <SelectContent className="bg-slate-800 border-slate-700">
             {floors.map((floor) => (

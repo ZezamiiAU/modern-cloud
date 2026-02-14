@@ -22,8 +22,6 @@ import {
   X,
   Filter,
   Plus,
-  Wifi,
-  WifiOff,
   Battery,
   BatteryLow,
   BatteryWarning,
@@ -58,9 +56,16 @@ import {
   SheetTitle,
   Label,
 } from "@repo/ui";
-import { useSiteContext, type Device, ZONE_TYPE_LABELS } from "@/contexts/site-context";
+import {
+  useSiteContext,
+  type Device,
+  ZONE_TYPE_LABELS,
+} from "@/contexts/site-context";
 
-const deviceTypeIcons: Record<Device["type"], React.ComponentType<{ className?: string }>> = {
+const deviceTypeIcons: Record<
+  Device["type"],
+  React.ComponentType<{ className?: string }>
+> = {
   "digital-lock": Lock,
   "access-reader": Radio,
   gateway: Router,
@@ -78,16 +83,28 @@ const deviceTypeLabels: Record<Device["type"], string> = {
   camera: "Camera",
 };
 
-function DeviceTypeIcon({ type, className }: { type: Device["type"]; className?: string }) {
+function DeviceTypeIcon({
+  type,
+  className,
+}: {
+  type: Device["type"];
+  className?: string;
+}) {
   const Icon = deviceTypeIcons[type];
   return <Icon className={className} />;
 }
 
 function BatteryIndicator({ level }: { level?: number }) {
-  if (level === undefined) return <span className="text-xs text-muted-foreground">N/A</span>;
+  if (level === undefined)
+    return <span className="text-xs text-muted-foreground">N/A</span>;
 
   const Icon = level > 50 ? Battery : level > 20 ? BatteryWarning : BatteryLow;
-  const colorClass = level > 50 ? "text-green-500" : level > 20 ? "text-yellow-500" : "text-red-500";
+  const colorClass =
+    level > 50
+      ? "text-green-500"
+      : level > 20
+        ? "text-yellow-500"
+        : "text-red-500";
 
   return (
     <div className="flex items-center gap-1">
@@ -103,12 +120,16 @@ function StatusIndicator({ status }: { status: Device["status"] }) {
       {status === "online" ? (
         <>
           <span className="w-2 h-2 rounded-full bg-green-500" />
-          <span className="text-xs font-medium text-green-700 uppercase">Online</span>
+          <span className="text-xs font-medium text-green-700 uppercase">
+            Online
+          </span>
         </>
       ) : (
         <>
           <span className="w-2 h-2 rounded-full bg-gray-400" />
-          <span className="text-xs font-medium text-gray-500 uppercase">Offline</span>
+          <span className="text-xs font-medium text-gray-500 uppercase">
+            Offline
+          </span>
         </>
       )}
     </div>
@@ -130,7 +151,8 @@ export default function DevicesPage() {
   } = useSiteContext();
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
   const [globalFilter, setGlobalFilter] = React.useState("");
   const [searchDebounce, setSearchDebounce] = React.useState("");
   const [filters, setFilters] = React.useState<{
@@ -140,7 +162,8 @@ export default function DevicesPage() {
   }>({});
 
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [selectedDeviceForDrawer, setSelectedDeviceForDrawer] = React.useState<Device | null>(null);
+  const [selectedDeviceForDrawer, setSelectedDeviceForDrawer] =
+    React.useState<Device | null>(null);
 
   const [addDeviceModalOpen, setAddDeviceModalOpen] = React.useState(false);
   const [newDeviceForm, setNewDeviceForm] = React.useState({
@@ -156,7 +179,10 @@ export default function DevicesPage() {
   React.useEffect(() => {
     const firstSite = sites[0];
     if (!newDeviceForm.siteId && firstSite) {
-      setNewDeviceForm((prev) => ({ ...prev, siteId: selectedSiteId || firstSite.id }));
+      setNewDeviceForm((prev) => ({
+        ...prev,
+        siteId: selectedSiteId || firstSite.id,
+      }));
     }
   }, [sites, selectedSiteId, newDeviceForm.siteId]);
 
@@ -179,7 +205,9 @@ export default function DevicesPage() {
     }
   }, [selectedDeviceId, devices]);
 
-  const deviceTypes = Object.entries(deviceTypeLabels).map(([value, label]) => ({ value, label }));
+  const deviceTypes = Object.entries(deviceTypeLabels).map(
+    ([value, label]) => ({ value, label }),
+  );
   const statuses = [
     { value: "online", label: "Online" },
     { value: "offline", label: "Offline" },
@@ -200,7 +228,7 @@ export default function DevicesPage() {
       const zone = zones.find((z) => z.id === zoneId);
       return zone?.name || "Unknown";
     },
-    [zones]
+    [zones],
   );
 
   // Get zone with type for display
@@ -208,9 +236,11 @@ export default function DevicesPage() {
     (zoneId: string | null) => {
       if (!zoneId) return { name: "Unassigned", type: null };
       const zone = zones.find((z) => z.id === zoneId);
-      return zone ? { name: zone.name, type: zone.type } : { name: "Unknown", type: null };
+      return zone
+        ? { name: zone.name, type: zone.type }
+        : { name: "Unknown", type: null };
     },
-    [zones]
+    [zones],
   );
 
   // Get site name by ID
@@ -219,7 +249,7 @@ export default function DevicesPage() {
       const site = sites.find((s) => s.id === siteId);
       return site?.name || "Unknown";
     },
-    [sites]
+    [sites],
   );
 
   const columns = React.useMemo<ColumnDef<Device>[]>(
@@ -245,7 +275,10 @@ export default function DevicesPage() {
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-              <DeviceTypeIcon type={row.original.type} className="h-4 w-4 text-blue-600" />
+              <DeviceTypeIcon
+                type={row.original.type}
+                className="h-4 w-4 text-blue-600"
+              />
             </div>
             <div>
               <div className="font-medium">{row.original.name}</div>
@@ -290,11 +323,18 @@ export default function DevicesPage() {
           return (
             <div className="flex items-center gap-1">
               {isUnassigned && <MapPin className="h-3 w-3 text-orange-500" />}
-              <span className={cn("text-sm", isUnassigned && "text-orange-600 font-medium")}>
+              <span
+                className={cn(
+                  "text-sm",
+                  isUnassigned && "text-orange-600 font-medium",
+                )}
+              >
                 {zoneInfo.name}
               </span>
               {zoneInfo.type && (
-                <span className="text-xs text-muted-foreground">({ZONE_TYPE_LABELS[zoneInfo.type]})</span>
+                <span className="text-xs text-muted-foreground">
+                  ({ZONE_TYPE_LABELS[zoneInfo.type]})
+                </span>
               )}
             </div>
           );
@@ -340,7 +380,9 @@ export default function DevicesPage() {
             )}
           </button>
         ),
-        cell: ({ row }) => <BatteryIndicator level={row.original.batteryLevel} />,
+        cell: ({ row }) => (
+          <BatteryIndicator level={row.original.batteryLevel} />
+        ),
         size: 100,
       },
       {
@@ -366,7 +408,8 @@ export default function DevicesPage() {
             {formatDistanceToNow(row.original.lastSeen, { addSuffix: true })}
           </span>
         ),
-        sortingFn: (a, b) => a.original.lastSeen.getTime() - b.original.lastSeen.getTime(),
+        sortingFn: (a, b) =>
+          a.original.lastSeen.getTime() - b.original.lastSeen.getTime(),
         size: 130,
       },
       {
@@ -385,12 +428,14 @@ export default function DevicesPage() {
         accessorKey: "firmwareVersion",
         header: "Firmware",
         cell: ({ row }) => (
-          <span className="text-xs font-mono">{row.original.firmwareVersion}</span>
+          <span className="text-xs font-mono">
+            {row.original.firmwareVersion}
+          </span>
         ),
         size: 100,
       },
     ],
-    [getSiteName, getZoneDisplay]
+    [getSiteName, getZoneDisplay],
   );
 
   // Filter devices
@@ -414,7 +459,7 @@ export default function DevicesPage() {
         (d) =>
           d.name.toLowerCase().includes(query) ||
           d.serialNumber.toLowerCase().includes(query) ||
-          d.macAddress.toLowerCase().includes(query)
+          d.macAddress.toLowerCase().includes(query),
       );
     }
 
@@ -454,7 +499,17 @@ export default function DevicesPage() {
     const data = filteredDevices;
 
     if (format === "csv") {
-      const headers = ["Name", "Type", "Site", "Zone", "Status", "Battery", "Serial", "MAC", "Firmware"];
+      const headers = [
+        "Name",
+        "Type",
+        "Site",
+        "Zone",
+        "Status",
+        "Battery",
+        "Serial",
+        "MAC",
+        "Firmware",
+      ];
       const rows = data.map((d) => [
         d.name,
         deviceTypeLabels[d.type],
@@ -491,7 +546,12 @@ export default function DevicesPage() {
   };
 
   const handleAddDevice = () => {
-    if (!newDeviceForm.name || !newDeviceForm.siteId || !newDeviceForm.serialNumber) return;
+    if (
+      !newDeviceForm.name ||
+      !newDeviceForm.siteId ||
+      !newDeviceForm.serialNumber
+    )
+      return;
 
     addDevice({
       name: newDeviceForm.name,
@@ -500,7 +560,9 @@ export default function DevicesPage() {
       zoneId: newDeviceForm.zoneId || null,
       status: "offline",
       lastSeen: new Date(),
-      macAddress: newDeviceForm.macAddress || `AA:BB:CC:${Math.random().toString(16).slice(2, 8).toUpperCase()}`,
+      macAddress:
+        newDeviceForm.macAddress ||
+        `AA:BB:CC:${Math.random().toString(16).slice(2, 8).toUpperCase()}`,
       serialNumber: newDeviceForm.serialNumber,
       firmwareVersion: "1.0.0",
     });
@@ -571,7 +633,9 @@ export default function DevicesPage() {
               {/* Filters */}
               <Select
                 value={filters.type || "all"}
-                onValueChange={(value) => handleFilterChange("type", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("type", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Types" />
@@ -588,7 +652,9 @@ export default function DevicesPage() {
 
               <Select
                 value={filters.status || "all"}
-                onValueChange={(value) => handleFilterChange("status", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("status", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[130px]">
                   <SelectValue placeholder="All Statuses" />
@@ -605,7 +671,9 @@ export default function DevicesPage() {
 
               <Select
                 value={filters.zone || "all"}
-                onValueChange={(value) => handleFilterChange("zone", value === "all" ? null : value)}
+                onValueChange={(value) =>
+                  handleFilterChange("zone", value === "all" ? null : value)
+                }
               >
                 <SelectTrigger className="w-[160px]">
                   <SelectValue placeholder="All Zones" />
@@ -676,9 +744,15 @@ export default function DevicesPage() {
               <div className="flex items-center gap-2">
                 <Filter className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">
-                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""} active
+                  {activeFilterCount} filter{activeFilterCount > 1 ? "s" : ""}{" "}
+                  active
                 </span>
-                <Button variant="ghost" size="sm" onClick={handleClearFilters} className="h-7 px-2 text-xs">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearFilters}
+                  className="h-7 px-2 text-xs"
+                >
                   Clear all
                 </Button>
               </div>
@@ -700,7 +774,10 @@ export default function DevicesPage() {
                     >
                       {header.isPlaceholder
                         ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
                     </th>
                   ))}
                 </tr>
@@ -709,7 +786,10 @@ export default function DevicesPage() {
             <tbody className="divide-y">
               {table.getRowModel().rows.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-4 py-12 text-center text-muted-foreground">
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-12 text-center text-muted-foreground"
+                  >
                     No devices found
                   </td>
                 </tr>
@@ -719,13 +799,16 @@ export default function DevicesPage() {
                     key={row.id}
                     className={cn(
                       "hover:bg-gray-50 transition-colors cursor-pointer",
-                      selectedDeviceId === row.original.id && "bg-indigo-50"
+                      selectedDeviceId === row.original.id && "bg-indigo-50",
                     )}
                     onClick={() => handleRowClick(row.original)}
                   >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="px-4 py-3 text-sm">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -738,16 +821,29 @@ export default function DevicesPage() {
 
       {/* Device Detail Drawer */}
       {selectedDeviceForDrawer && (
-        <Sheet open={drawerOpen} onOpenChange={(open) => { if (!open) { setDrawerOpen(false); selectDevice(null); } }}>
+        <Sheet
+          open={drawerOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setDrawerOpen(false);
+              selectDevice(null);
+            }
+          }}
+        >
           <SheetContent side="right" className="w-full sm:max-w-[480px]">
             <SheetHeader>
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <DeviceTypeIcon type={selectedDeviceForDrawer.type} className="h-6 w-6 text-blue-600" />
+                  <DeviceTypeIcon
+                    type={selectedDeviceForDrawer.type}
+                    className="h-6 w-6 text-blue-600"
+                  />
                 </div>
                 <div className="flex-1">
                   <SheetTitle>{selectedDeviceForDrawer.name}</SheetTitle>
-                  <SheetDescription>{deviceTypeLabels[selectedDeviceForDrawer.type]}</SheetDescription>
+                  <SheetDescription>
+                    {deviceTypeLabels[selectedDeviceForDrawer.type]}
+                  </SheetDescription>
                 </div>
                 <StatusIndicator status={selectedDeviceForDrawer.status} />
               </div>
@@ -759,20 +855,30 @@ export default function DevicesPage() {
                 <h4 className="text-sm font-semibold">Device Information</h4>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
-                    <p className="text-xs text-muted-foreground">Serial Number</p>
-                    <p className="font-mono">{selectedDeviceForDrawer.serialNumber}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Serial Number
+                    </p>
+                    <p className="font-mono">
+                      {selectedDeviceForDrawer.serialNumber}
+                    </p>
                   </div>
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
                     <p className="text-xs text-muted-foreground">MAC Address</p>
-                    <p className="font-mono">{selectedDeviceForDrawer.macAddress}</p>
+                    <p className="font-mono">
+                      {selectedDeviceForDrawer.macAddress}
+                    </p>
                   </div>
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
                     <p className="text-xs text-muted-foreground">Firmware</p>
-                    <p className="font-mono">{selectedDeviceForDrawer.firmwareVersion}</p>
+                    <p className="font-mono">
+                      {selectedDeviceForDrawer.firmwareVersion}
+                    </p>
                   </div>
                   <div className="bg-gray-50 rounded-lg px-3 py-2">
                     <p className="text-xs text-muted-foreground">Battery</p>
-                    <BatteryIndicator level={selectedDeviceForDrawer.batteryLevel} />
+                    <BatteryIndicator
+                      level={selectedDeviceForDrawer.batteryLevel}
+                    />
                   </div>
                 </div>
               </div>
@@ -783,13 +889,17 @@ export default function DevicesPage() {
                 <div className="space-y-2">
                   <div className="text-sm">
                     <span className="text-muted-foreground">Site: </span>
-                    <span className="font-medium">{getSiteName(selectedDeviceForDrawer.siteId)}</span>
+                    <span className="font-medium">
+                      {getSiteName(selectedDeviceForDrawer.siteId)}
+                    </span>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-sm">Assigned Zone</Label>
                     <Select
                       value={selectedDeviceForDrawer.zoneId || "unassigned"}
-                      onValueChange={(value) => handleAssignZone(value === "unassigned" ? null : value)}
+                      onValueChange={(value) =>
+                        handleAssignZone(value === "unassigned" ? null : value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -805,7 +915,8 @@ export default function DevicesPage() {
                     </Select>
                     {!selectedDeviceForDrawer.zoneId && (
                       <p className="text-xs text-orange-600">
-                        This device is not assigned to a zone. Assign it to appear on the floor plan.
+                        This device is not assigned to a zone. Assign it to
+                        appear on the floor plan.
                       </p>
                     )}
                   </div>
@@ -814,7 +925,10 @@ export default function DevicesPage() {
 
               {/* Last Seen */}
               <div className="text-sm text-muted-foreground">
-                Last seen: {formatDistanceToNow(selectedDeviceForDrawer.lastSeen, { addSuffix: true })}
+                Last seen:{" "}
+                {formatDistanceToNow(selectedDeviceForDrawer.lastSeen, {
+                  addSuffix: true,
+                })}
               </div>
             </div>
           </SheetContent>
@@ -827,7 +941,8 @@ export default function DevicesPage() {
           <SheetHeader>
             <SheetTitle>Add New Device</SheetTitle>
             <SheetDescription>
-              Register a new device to the system. You can assign it to a space now or later.
+              Register a new device to the system. You can assign it to a space
+              now or later.
             </SheetDescription>
           </SheetHeader>
 
@@ -837,7 +952,12 @@ export default function DevicesPage() {
               <Input
                 placeholder="e.g., Main Entrance Lock"
                 value={newDeviceForm.name}
-                onChange={(e) => setNewDeviceForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -845,7 +965,12 @@ export default function DevicesPage() {
               <Label>Device Type *</Label>
               <Select
                 value={newDeviceForm.type}
-                onValueChange={(value) => setNewDeviceForm((prev) => ({ ...prev, type: value as Device["type"] }))}
+                onValueChange={(value) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    type: value as Device["type"],
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -865,7 +990,12 @@ export default function DevicesPage() {
               <Input
                 placeholder="e.g., ZEZ-DL-001"
                 value={newDeviceForm.serialNumber}
-                onChange={(e) => setNewDeviceForm((prev) => ({ ...prev, serialNumber: e.target.value }))}
+                onChange={(e) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    serialNumber: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -874,7 +1004,12 @@ export default function DevicesPage() {
               <Input
                 placeholder="e.g., AA:BB:CC:DD:EE:FF"
                 value={newDeviceForm.macAddress}
-                onChange={(e) => setNewDeviceForm((prev) => ({ ...prev, macAddress: e.target.value }))}
+                onChange={(e) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    macAddress: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -882,7 +1017,13 @@ export default function DevicesPage() {
               <Label>Site *</Label>
               <Select
                 value={newDeviceForm.siteId}
-                onValueChange={(value) => setNewDeviceForm((prev) => ({ ...prev, siteId: value, zoneId: "" }))}
+                onValueChange={(value) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    siteId: value,
+                    zoneId: "",
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a site" />
@@ -901,7 +1042,12 @@ export default function DevicesPage() {
               <Label>Zone (Optional)</Label>
               <Select
                 value={newDeviceForm.zoneId || "none"}
-                onValueChange={(value) => setNewDeviceForm((prev) => ({ ...prev, zoneId: value === "none" ? "" : value }))}
+                onValueChange={(value) =>
+                  setNewDeviceForm((prev) => ({
+                    ...prev,
+                    zoneId: value === "none" ? "" : value,
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a zone" />
@@ -917,18 +1063,27 @@ export default function DevicesPage() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                If not assigned, the device will appear in the Unplaced Devices sidebar.
+                If not assigned, the device will appear in the Unplaced Devices
+                sidebar.
               </p>
             </div>
 
             <div className="pt-4 flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setAddDeviceModalOpen(false)}>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setAddDeviceModalOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 className="flex-1"
                 onClick={handleAddDevice}
-                disabled={!newDeviceForm.name || !newDeviceForm.siteId || !newDeviceForm.serialNumber}
+                disabled={
+                  !newDeviceForm.name ||
+                  !newDeviceForm.siteId ||
+                  !newDeviceForm.serialNumber
+                }
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Add Device

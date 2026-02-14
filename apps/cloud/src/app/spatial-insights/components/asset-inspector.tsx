@@ -11,7 +11,6 @@ import {
   Cpu,
   Battery,
   Signal,
-  Clock,
   MapPin,
   Settings,
   User,
@@ -19,8 +18,13 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
-import { cn, Sheet, SheetContent, SheetHeader, SheetTitle } from "@repo/ui";
-import type { Device, Transaction, TransactionType, TransactionStatus } from "@/contexts/site-context";
+import { cn, Sheet, SheetContent } from "@repo/ui";
+import type {
+  Device,
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+} from "@/contexts/site-context";
 
 // Device type icons
 const deviceTypeIcons: Record<Device["type"], typeof Lock> = {
@@ -43,7 +47,13 @@ const transactionTypeLabels: Record<TransactionType, string> = {
 
 // Generate mock transactions for a device
 function generateMockTransactions(deviceId: string): Transaction[] {
-  const types: TransactionType[] = ["access", "unlock", "lock", "alarm", "maintenance"];
+  const types: TransactionType[] = [
+    "access",
+    "unlock",
+    "lock",
+    "alarm",
+    "maintenance",
+  ];
   const statuses: TransactionStatus[] = ["success", "denied", "error"];
   const users = [
     { id: "user-1", name: "John Doe" },
@@ -55,8 +65,14 @@ function generateMockTransactions(deviceId: string): Transaction[] {
   const transactions: Transaction[] = [];
   for (let i = 0; i < 10; i++) {
     const type = types[Math.floor(Math.random() * types.length)] ?? "access";
-    const status = i < 7 ? "success" : (statuses[Math.floor(Math.random() * statuses.length)] ?? "success");
-    const user = users[Math.floor(Math.random() * users.length)] ?? { id: "user-1", name: "John Doe" };
+    const status =
+      i < 7
+        ? "success"
+        : (statuses[Math.floor(Math.random() * statuses.length)] ?? "success");
+    const user = users[Math.floor(Math.random() * users.length)] ?? {
+      id: "user-1",
+      name: "John Doe",
+    };
 
     transactions.push({
       id: `txn-${deviceId}-${i}`,
@@ -70,7 +86,9 @@ function generateMockTransactions(deviceId: string): Transaction[] {
     });
   }
 
-  return transactions.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  return transactions.sort(
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
+  );
 }
 
 type TabId = "overview" | "activity" | "config";
@@ -117,25 +135,34 @@ export const AssetInspector = memo(function AssetInspector({
               <div
                 className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center",
-                  isOnline ? "bg-cyan-500/20" : "bg-red-500/20"
+                  isOnline ? "bg-cyan-500/20" : "bg-red-500/20",
                 )}
               >
-                <Icon className={cn("w-6 h-6", isOnline ? "text-cyan-400" : "text-red-400")} />
+                <Icon
+                  className={cn(
+                    "w-6 h-6",
+                    isOnline ? "text-cyan-400" : "text-red-400",
+                  )}
+                />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-slate-100">{asset.name}</h2>
+                <h2 className="text-lg font-semibold text-slate-100">
+                  {asset.name}
+                </h2>
                 <div className="flex items-center gap-2 mt-1">
                   <span
                     className={cn(
                       "px-2 py-0.5 rounded-full text-xs font-medium",
                       isOnline
                         ? "bg-green-500/20 text-green-400"
-                        : "bg-red-500/20 text-red-400"
+                        : "bg-red-500/20 text-red-400",
                     )}
                   >
                     {isOnline ? "Online" : "Offline"}
                   </span>
-                  <span className="text-xs text-slate-400 capitalize">{asset.type.replace("-", " ")}</span>
+                  <span className="text-xs text-slate-400 capitalize">
+                    {asset.type.replace("-", " ")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -158,7 +185,7 @@ export const AssetInspector = memo(function AssetInspector({
                 "flex-1 py-3 text-sm font-medium transition-colors",
                 activeTab === tab.id
                   ? "text-cyan-400 border-b-2 border-cyan-400"
-                  : "text-slate-400 hover:text-slate-200"
+                  : "text-slate-400 hover:text-slate-200",
               )}
             >
               {tab.label}
@@ -167,16 +194,15 @@ export const AssetInspector = memo(function AssetInspector({
         </div>
 
         {/* Tab Content */}
-        <div className="p-6 overflow-y-auto" style={{ height: "calc(100vh - 220px)" }}>
-          {activeTab === "overview" && (
-            <OverviewTab asset={asset} />
-          )}
+        <div
+          className="p-6 overflow-y-auto"
+          style={{ height: "calc(100vh - 220px)" }}
+        >
+          {activeTab === "overview" && <OverviewTab asset={asset} />}
           {activeTab === "activity" && (
             <ActivityTab transactions={transactions} />
           )}
-          {activeTab === "config" && (
-            <ConfigTab asset={asset} />
-          )}
+          {activeTab === "config" && <ConfigTab asset={asset} />}
         </div>
       </SheetContent>
     </Sheet>
@@ -189,18 +215,27 @@ const OverviewTab = memo(function OverviewTab({ asset }: { asset: Device }) {
     <div className="space-y-6">
       {/* Health Status */}
       <div className="bg-slate-700/30 rounded-xl p-4">
-        <h3 className="text-sm font-medium text-slate-300 mb-3">Health Status</h3>
+        <h3 className="text-sm font-medium text-slate-300 mb-3">
+          Health Status
+        </h3>
         <div className="grid grid-cols-2 gap-4">
           {asset.batteryLevel !== undefined && (
             <div className="flex items-center gap-3">
-              <Battery className={cn(
-                "w-5 h-5",
-                asset.batteryLevel > 50 ? "text-green-400" :
-                  asset.batteryLevel > 20 ? "text-yellow-400" : "text-red-400"
-              )} />
+              <Battery
+                className={cn(
+                  "w-5 h-5",
+                  asset.batteryLevel > 50
+                    ? "text-green-400"
+                    : asset.batteryLevel > 20
+                      ? "text-yellow-400"
+                      : "text-red-400",
+                )}
+              />
               <div>
                 <div className="text-sm text-slate-400">Battery</div>
-                <div className="text-lg font-semibold text-slate-100">{asset.batteryLevel}%</div>
+                <div className="text-lg font-semibold text-slate-100">
+                  {asset.batteryLevel}%
+                </div>
               </div>
             </div>
           )}
@@ -220,11 +255,15 @@ const OverviewTab = memo(function OverviewTab({ asset }: { asset: Device }) {
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-slate-400">Serial Number</span>
-            <span className="text-slate-100 font-mono text-sm">{asset.serialNumber}</span>
+            <span className="text-slate-100 font-mono text-sm">
+              {asset.serialNumber}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">MAC Address</span>
-            <span className="text-slate-100 font-mono text-sm">{asset.macAddress}</span>
+            <span className="text-slate-100 font-mono text-sm">
+              {asset.macAddress}
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Firmware</span>
@@ -245,7 +284,9 @@ const OverviewTab = memo(function OverviewTab({ asset }: { asset: Device }) {
         <div className="flex items-center gap-3">
           <MapPin className="w-5 h-5 text-slate-400" />
           <div>
-            <div className="text-slate-100">Zone: {asset.zoneId || "Unassigned"}</div>
+            <div className="text-slate-100">
+              Zone: {asset.zoneId || "Unassigned"}
+            </div>
             <div className="text-sm text-slate-400">Site: {asset.siteId}</div>
           </div>
         </div>
@@ -281,13 +322,18 @@ const ActivityTab = memo(function ActivityTab({
             key={txn.id}
             className="bg-slate-700/30 rounded-lg p-3 flex items-start gap-3"
           >
-            <StatusIcon className={cn("w-5 h-5 mt-0.5", statusColors[txn.status])} />
+            <StatusIcon
+              className={cn("w-5 h-5 mt-0.5", statusColors[txn.status])}
+            />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <span className="font-medium text-slate-100">
                   {transactionTypeLabels[txn.type]}
                 </span>
-                <span className="text-xs text-slate-400" suppressHydrationWarning>
+                <span
+                  className="text-xs text-slate-400"
+                  suppressHydrationWarning
+                >
                   {txn.timestamp.toLocaleString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -314,16 +360,24 @@ const ActivityTab = memo(function ActivityTab({
 });
 
 // Config Tab
-const ConfigTab = memo(function ConfigTab({ asset }: { asset: Device }) {
+const ConfigTab = memo(function ConfigTab({
+  asset: _asset,
+}: {
+  asset: Device;
+}) {
   return (
     <div className="space-y-6">
       <div className="bg-slate-700/30 rounded-xl p-4">
-        <h3 className="text-sm font-medium text-slate-300 mb-3">Configuration</h3>
+        <h3 className="text-sm font-medium text-slate-300 mb-3">
+          Configuration
+        </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <div className="text-slate-100">Auto-lock</div>
-              <div className="text-sm text-slate-400">Lock after 30 seconds</div>
+              <div className="text-sm text-slate-400">
+                Lock after 30 seconds
+              </div>
             </div>
             <div className="w-12 h-6 bg-cyan-500 rounded-full relative">
               <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
