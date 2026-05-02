@@ -4,7 +4,6 @@
  * User settings and sign-out.
  */
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { LogoutLink } from "@kinde-oss/kinde-auth-nextjs/components";
 import {
   PageHeader,
@@ -14,10 +13,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui";
+import { getAuthSession, isMockAuthEnabled } from "@/lib/auth-session";
 
 export default async function SettingsPage() {
-  const { getUser } = getKindeServerSession();
+  const { getUser } = getAuthSession();
   const user = await getUser();
+  const mockEnabled = isMockAuthEnabled();
 
   return (
     <div className="space-y-6">
@@ -45,7 +46,11 @@ export default async function SettingsPage() {
           </div>
           <div className="pt-4 border-t">
             <Button variant="outline" asChild>
-              <LogoutLink>Sign Out</LogoutLink>
+              {mockEnabled ? (
+                <a href="/api/mock-auth/logout">Sign Out</a>
+              ) : (
+                <LogoutLink>Sign Out</LogoutLink>
+              )}
             </Button>
           </div>
         </CardContent>

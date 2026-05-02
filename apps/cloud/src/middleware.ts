@@ -7,26 +7,33 @@
  */
 
 import { withAuth } from "@kinde-oss/kinde-auth-nextjs/middleware";
-import { NextResponse, type NextRequest } from "next/server";
+import {
+  NextResponse,
+  type NextRequest,
+  type NextFetchEvent,
+} from "next/server";
 
-// Check if Kinde is properly configured
-const isKindeConfigured = () => {
-  const issuerUrl = process.env.KINDE_ISSUER_URL;
-  return issuerUrl && !issuerUrl.includes("placeholder");
-};
+type KindeMiddleware = (
+  req: NextRequest,
+  evt: NextFetchEvent,
+) => Promise<NextResponse>;
 
-export default async function middleware(req: NextRequest) {
-  // Skip auth if Kinde is not configured (dev mode without credentials)
-  if (!isKindeConfigured()) {
+const kindeMiddleware = withAuth(async function middleware() {}, {
+  publicPaths: ["/"],
+}) as unknown as KindeMiddleware;
+
+export default async function middleware(
+  req: NextRequest,
+  evt: NextFetchEvent,
+) {
+  if (process.env.MOCK_AUTH === "1") {
     return NextResponse.next();
   }
-
-  // Use Kinde middleware when configured
-  return withAuth(req, {
-    isReturnToCurrentPage: true,
-  });
+  return kindeMiddleware(req, evt);
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: [
+    "/((?!_next|api/auth|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+  ],
 };

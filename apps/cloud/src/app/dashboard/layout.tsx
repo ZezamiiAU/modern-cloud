@@ -5,7 +5,7 @@
  * Uses new ZezamiiSidebar for multi-product navigation.
  */
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getAuthSession } from "@/lib/auth-session";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { HeaderWrapper } from "@/components/header-wrapper";
 
@@ -14,8 +14,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get user from Kinde server-side (don't cache - session is per-request)
-  const { getUser } = getKindeServerSession();
+  const { getUser } = getAuthSession();
   const kindeUser = await getUser();
 
   // Transform to serializable user object

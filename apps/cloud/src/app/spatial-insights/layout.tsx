@@ -5,7 +5,7 @@
  * Uses standard ZezamiiSidebar and Header for consistent navigation.
  */
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
+import { getAuthSession } from "@/lib/auth-session";
 import { SidebarWrapper } from "@/components/sidebar-wrapper";
 import { HeaderWrapper } from "@/components/header-wrapper";
 import { SiteProviderWrapper } from "./components/site-provider-wrapper";
@@ -15,8 +15,7 @@ export default async function SpatialInsightsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Get user from Kinde server-side (don't cache - session is per-request)
-  const { getUser } = getKindeServerSession();
+  const { getUser } = getAuthSession();
   const kindeUser = await getUser();
 
   // Transform to serializable user object
@@ -46,9 +45,7 @@ export default async function SpatialInsightsLayout({
 
         {/* Content with SiteProvider */}
         <SiteProviderWrapper>
-          <main className="flex-1 overflow-auto bg-slate-900">
-            {children}
-          </main>
+          <main className="flex-1 overflow-auto bg-slate-900">{children}</main>
         </SiteProviderWrapper>
       </div>
     </div>

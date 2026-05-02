@@ -12,12 +12,14 @@ interface SidebarWrapperProps {
   };
 }
 
-export const SidebarWrapper = React.memo(function SidebarWrapper({ user }: SidebarWrapperProps) {
+export const SidebarWrapper = React.memo(function SidebarWrapper({
+  user,
+}: SidebarWrapperProps) {
   const router = useRouter();
 
   const handleLogout = React.useCallback(() => {
-    // Redirect to Kinde logout endpoint
-    router.push("/api/auth/logout");
+    const mockEnabled = process.env.NEXT_PUBLIC_MOCK_AUTH === "1";
+    router.push(mockEnabled ? "/api/mock-auth/logout" : "/api/auth/logout");
   }, [router]);
 
   return <ZezamiiSidebar user={user} onLogout={handleLogout} />;

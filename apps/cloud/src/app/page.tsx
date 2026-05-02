@@ -5,7 +5,6 @@
  * Redirects to dashboard if already authenticated.
  */
 
-import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
 import { redirect } from "next/navigation";
 import {
   LoginLink,
@@ -13,9 +12,16 @@ import {
 } from "@kinde-oss/kinde-auth-nextjs/components";
 import { Card, CardContent } from "@repo/ui";
 import { Cloud, Users, Building2, Shield, CheckCircle2 } from "lucide-react";
+import { getAuthSession, isMockAuthEnabled } from "@/lib/auth-session";
 
-export default async function HomePage() {
-  const { isAuthenticated } = getKindeServerSession();
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ mock_error?: string }>;
+}) {
+  const { isAuthenticated } = getAuthSession();
+  const mockEnabled = isMockAuthEnabled();
+  const mockError = (await searchParams)?.mock_error;
 
   if (await isAuthenticated()) {
     redirect("/dashboard");
@@ -47,10 +53,13 @@ export default async function HomePage() {
           {/* Tagline */}
           <div className="mb-12">
             <h2 className="text-4xl font-bold mb-4 leading-tight">
-              Know Your People,<br />Know Your Spaces
+              Know Your People,
+              <br />
+              Know Your Spaces
             </h2>
             <p className="text-lg text-slate-300 max-w-md">
-              Unified platform for managing access control, spaces, lockers, rooms, bookings, and vision across your organization.
+              Unified platform for managing access control, spaces, lockers,
+              rooms, bookings, and vision across your organization.
             </p>
           </div>
 
@@ -62,7 +71,9 @@ export default async function HomePage() {
               </div>
               <div>
                 <h3 className="font-semibold">People Management</h3>
-                <p className="text-sm text-slate-300">Identity, credentials, and activity tracking</p>
+                <p className="text-sm text-slate-300">
+                  Identity, credentials, and activity tracking
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -71,7 +82,9 @@ export default async function HomePage() {
               </div>
               <div>
                 <h3 className="font-semibold">Space Control</h3>
-                <p className="text-sm text-slate-300">Rooms, lockers, and booking management</p>
+                <p className="text-sm text-slate-300">
+                  Rooms, lockers, and booking management
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -80,7 +93,9 @@ export default async function HomePage() {
               </div>
               <div>
                 <h3 className="font-semibold">Access Security</h3>
-                <p className="text-sm text-slate-300">Enterprise-grade permissions and monitoring</p>
+                <p className="text-sm text-slate-300">
+                  Enterprise-grade permissions and monitoring
+                </p>
               </div>
             </div>
           </div>
@@ -102,7 +117,9 @@ export default async function HomePage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Zezamii Cloud</h1>
-              <p className="text-sm text-slate-300">Know Your People, Know Your Spaces</p>
+              <p className="text-sm text-slate-300">
+                Know Your People, Know Your Spaces
+              </p>
             </div>
           </div>
 
@@ -110,7 +127,9 @@ export default async function HomePage() {
             <CardContent className="p-8">
               {/* Header */}
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome to Zezamii</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                  Welcome to Zezamii
+                </h2>
                 <p className="text-sm text-slate-600">
                   Sign in to access your administration dashboard
                 </p>
@@ -118,12 +137,63 @@ export default async function HomePage() {
 
               {/* Login Button */}
               <LoginLink className="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-base font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 h-12 px-6 w-full shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20 20C20 16.13 16.42 13 12 13C7.58 13 4 16.13 4 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg
+                  className="w-5 h-5 mr-2"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M20 20C20 16.13 16.42 13 12 13C7.58 13 4 16.13 4 20"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 Sign In
               </LoginLink>
+
+              {mockEnabled && (
+                <form
+                  action="/api/mock-auth/login"
+                  method="POST"
+                  className="mt-3 space-y-2"
+                >
+                  <input
+                    type="password"
+                    name="passcode"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    placeholder="Passcode"
+                    required
+                    className="w-full h-11 px-3 rounded-lg border-2 border-amber-300 bg-amber-50 text-amber-900 placeholder-amber-400/70 focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all border-2 border-dashed border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 h-11 px-6 w-full"
+                  >
+                    Mock Sign In
+                  </button>
+                  {mockError === "invalid" && (
+                    <p className="text-xs text-red-600 text-center">
+                      Invalid passcode
+                    </p>
+                  )}
+                  {mockError === "throttled" && (
+                    <p className="text-xs text-red-600 text-center">
+                      Too many attempts. Try again in a few minutes.
+                    </p>
+                  )}
+                </form>
+              )}
 
               {/* Divider */}
               <div className="relative my-6">
@@ -131,7 +201,9 @@ export default async function HomePage() {
                   <div className="w-full border-t border-slate-200"></div>
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="px-2 bg-white text-slate-500">New to Zezamii?</span>
+                  <span className="px-2 bg-white text-slate-500">
+                    New to Zezamii?
+                  </span>
                 </div>
               </div>
 
@@ -145,8 +217,12 @@ export default async function HomePage() {
                 <div className="flex gap-2">
                   <CheckCircle2 className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
                   <div className="text-xs text-cyan-900">
-                    <p className="font-semibold mb-1">Multiple sign-in options available</p>
-                    <p className="text-cyan-700">Email/password and Google social login (if enabled)</p>
+                    <p className="font-semibold mb-1">
+                      Multiple sign-in options available
+                    </p>
+                    <p className="text-cyan-700">
+                      Email/password and Google social login (if enabled)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -154,9 +230,19 @@ export default async function HomePage() {
               {/* Footer */}
               <p className="text-xs text-center text-slate-500 mt-6">
                 By continuing, you agree to our{" "}
-                <a href="#" className="text-cyan-600 hover:text-cyan-700 underline">Terms of Service</a>
-                {" "}and{" "}
-                <a href="#" className="text-cyan-600 hover:text-cyan-700 underline">Privacy Policy</a>
+                <a
+                  href="#"
+                  className="text-cyan-600 hover:text-cyan-700 underline"
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="text-cyan-600 hover:text-cyan-700 underline"
+                >
+                  Privacy Policy
+                </a>
               </p>
             </CardContent>
           </Card>

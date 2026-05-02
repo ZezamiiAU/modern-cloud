@@ -9,7 +9,27 @@
  */
 
 import { handleAuth } from "@kinde-oss/kinde-auth-nextjs/server";
+import { type NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export const GET = handleAuth();
+const authHandler = handleAuth();
+
+export async function GET(
+  req: NextRequest,
+  ctx: { params: Promise<{ kindeAuth: string }> },
+) {
+  const { kindeAuth } = await ctx.params;
+  console.log("[kinde-debug] route:", kindeAuth);
+  console.log("[kinde-debug] full url:", req.url);
+  console.log("[kinde-debug] search:", req.nextUrl.search);
+  console.log(
+    "[kinde-debug] state param:",
+    req.nextUrl.searchParams.get("state"),
+  );
+  console.log(
+    "[kinde-debug] code param:",
+    req.nextUrl.searchParams.get("code"),
+  );
+  return authHandler(req, ctx);
+}
