@@ -1,0 +1,75 @@
+# Azure Pipelines CI
+#
+# Mirrors .github/workflows/security.yml (weekly security audit) and adds the
+# repo's standard turbo checks (lint / type-check / build).
+#
+# Pinning notes (the Azure equivalents of SHA-pinning GitHub Actions):
+#   - Built-in tasks (e.g. NodeTool@0) can only be pinned to a MAJOR version;
+#     Azure does not support SHA-pinning tasks. Keep them at the major line.
+#   - The agent image is pinned to a concrete version (ubuntu-24.04) rather than
+#     the moving 'ubuntu-latest' alias for reproducible builds.
+#   - pnpm is pinned to 9.15.0 via corepack, matching "packageManager" in
+#     package.json, instead of installing a floating latest.
+
+name: Security Audit + CI
+
+trigger:
+  branches:
+    include:
+      - master
+      - main
+
+pr:
+  branches:
+    include:
+      - master
+      - main
+
+schedules:
+  - cron: '0 9 * * 1'
+    displayName: Weekly Monday 09:00 UTC security audit
+    branches:
+      include:
+        - master
+        - main
+    always: true
+
+pool:
+  vmImage: 'ubuntu-24.04'
+
+steps:
+  - task: NodeTool@0
+    displayName: 'Use Node.js 20'
+    inputs:
+      versionSpec: '20.x'
+
+  - script: |
+      corepack enable
+      corepack prepare pnpm@9.15.0 --activate
+    displayName: 'Activate pnpm 9.15.0 (corepack)'
+
+  - script: pnpm config set store-dir $(Pipeline.Workspace)/.pnpm-store
+    displayName: 'Configure pnpm store'
+
+  - task: Cache@2
+    displayName: 'Cache pnpm store'
+    inputs:
+      key: 'pnpm | "$(Agent.OS)" | pnpm-lock.yaml'
+      restoreKeys: |
+        pnpm | "$(Agent.OS)"
+      path: $(Pipeline.Workspace)/.pnpm-store
+
+  - script: pnpm install --frozen-lockfile
+    displayName: 'Install dependencies'
+
+  - script: pnpm lint
+    displayName: 'Lint'
+
+  - script: pnpm type-check
+    displayName: 'Type-check'
+
+  - script: pnpm build
+    displayName: 'Build'
+
+  - script: pnpm audit
+    displayName: 'Security audit'
