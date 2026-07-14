@@ -40,11 +40,14 @@ This document is the plan to take that scaffold to production.
    memberships are **one role per org** (`uq_user_org`), so elevation is a role
    *change*, not a stacked second role. No new code — this is existing
    role machinery.
-5. **v1 device scope: all devices in the selected org.** A partner sees every
-   device in orgs they're a member of. Only add a
-   `device_refs.installedByPartnerId` provenance column **if** multiple partners
-   realistically service one org and "your locks vs. theirs" must be split.
-   Deferred by default — it's the one avoidable schema change.
+5. **Device scope: only the locks the partner installed.** Because a single org
+   **can be serviced by more than one partner** (confirmed), each partner must
+   see only *their* devices, not another partner's. This requires device→partner
+   provenance: an `installedByPartnerId` column on `device_refs`. Devices and
+   device-scoped activity are filtered to `installedByPartnerId = <partner>`.
+   (If a customer elevates the partner's org role to `viewer`/`global_user`,
+   they leave the partner view and see the whole org's normal dashboard — that
+   broader access is the customer's explicit grant.)
 6. **Frontend stays in `apps/cloud`.** Since a partner is a scoped org member
    (not an external cross-org party), the separate-app rationale falls away. The
    existing scaffold screens get wired to real per-org data.
@@ -69,8 +72,11 @@ tables declared as `coreSchema.table(...)`.
     partner). Unique on `(userId, partnerId)`.
   - `partner_resources` — co-branded content: `title`, `description`,
     `category`, `url`, `updatedAt`, `coBranded`, `partnerId`.
-  - *(deferred)* `device_refs.installedByPartnerId` — only if decision 5 flips
-    to "only their locks."
+- **Device provenance (required — see decision 5):** add a nullable
+  `installedByPartnerId` FK column to `device_refs` (→ `partners.id`) plus an
+  index on `(orgRefId, installedByPartnerId)`. This is an `ALTER TABLE` on an
+  existing ref table; use `ADD COLUMN IF NOT EXISTS` in the migration. Backfill
+  is a provisioning concern (Phase 4).
 - **Views:** add `v_partner_memberships` (partner + user join) and, if resources
   are read via views, `v_partner_resources`, to the views SQL. The resolver
   reads `public.v_*` views, never `core.*` tables directly (repo convention:
@@ -93,10 +99,15 @@ Files: `packages/api/src/db/schema/orgs.ts`,
   admin`). Use the existing **`orgProcedure`** (no new middleware) so everything
   is auto-scoped to the selected org:
   - `getContext` — the signed-in user's partner identity + branding.
-  - `listDevices` — devices in the current org (`device_refs`, later joined to
-    health — see Phase 3).
-  - `listActivity` — from `audit_log`, filtered to the current org. Being
-    org-scoped is now exactly right (no `site_ref_id` needed).
+  - `listDevices` — devices in the current org **filtered to
+    `installedByPartnerId = <this partner>`** (joined to live health — Phase 3).
+  - `listActivity` — access events for **this partner's devices in the current
+    org**. Source note: `audit_log` is org-scoped with no device/site column, so
+    filter its rows by `resourceType = 'device'` + `resourceId IN (<partner's
+    device ids>)`; validate coverage, and fall back to device/pass events
+    (which carry device + `site_ref_id`) if `audit_log` doesn't record every
+    unlock. Showing *all* org activity is not acceptable here — it would leak a
+    co-servicing partner's events.
   - `listResources` — `partner_resources` for the user's partner.
 - **Swap the gate:** replace the mock in `apps/cloud/src/lib/partner/context.ts`
   (`isPartnerUser`, `getPartnerContext`) so the portal renders when the selected
@@ -109,20 +120,24 @@ Files: `packages/api/src/router/partner.ts` (new),
 `packages/api/src/router/index.ts`, `apps/cloud/src/lib/partner/context.ts`,
 `apps/cloud/src/app/partner/*` (swap mock imports for tRPC queries).
 
-## Phase 3 — Device health source (the one real unknown)
+## Phase 3 — Device health source
 
 `device_refs` has **no telemetry** (`externalDeviceId`, `slug`, `deviceType`,
 `displayName` only). Health / battery / firmware / last-seen live in the device
-platform / legacy MSSQL. **Decision required:**
+platform / legacy MSSQL.
 
-- **A. On-demand fetch** via `packages/api/src/services/legacy-api.ts` — no new
-  storage, always fresh, but adds latency and a hard dependency on the legacy
-  API per portal load.
-- **B. Synced `device_health` table** — a periodic sync writes health rows;
-  portal reads are fast and resilient, at the cost of a sync job and staleness.
+**Decision: on-demand fetch (A).** `listDevices` calls the legacy device API via
+`packages/api/src/services/legacy-api.ts` and merges live health onto the
+partner's `device_refs` rows — no new storage, always fresh. Implementation
+notes:
 
-Recommendation: start with **A** if the legacy API is reliable and quick;
-move to **B** if latency or availability becomes a problem.
+- **Batch** the lookup (one call for the partner's device set), don't fetch
+  per-device, to keep portal loads fast.
+- **Short-TTL cache / graceful degradation:** if the legacy API is slow or down,
+  render devices with an "unknown / last-known" health state rather than failing
+  the whole page.
+- Revisit a synced `device_health` table later only if latency or legacy-API
+  availability becomes a real problem.
 
 ## Phase 4 — Provisioning
 
@@ -147,9 +162,18 @@ management.
 - **Phase 3–4:** seed a partner + memberships; drive the portal end-to-end for a
   selected org and confirm devices / activity / resources render from real data.
 
-## Open questions
+## Resolved decisions
 
-1. **Device health source** — Phase 3 option A (on-demand) vs. B (synced table)?
-2. **Multi-partner orgs** — is one org ever serviced by more than one partner? If
-   yes, add `device_refs.installedByPartnerId` provenance (decision 5) so a
-   partner sees only their own locks.
+1. **Device health source → on-demand fetch** from the legacy device API
+   (Phase 3, option A), batched with graceful degradation.
+2. **Multi-partner orgs → yes.** A single org can be serviced by more than one
+   partner, so `device_refs.installedByPartnerId` provenance is **required**
+   (decision 5); devices and activity are filtered to the partner's own locks.
+
+## Remaining unknowns (validate during implementation)
+
+- **`audit_log` coverage** — confirm unlock/denied events are recorded with
+  `resourceType = 'device'` + `resourceId`; if not, source activity from
+  device/pass events instead (Phase 2, `listActivity`).
+- **Backfill** — how existing `device_refs` get their `installedByPartnerId`
+  populated for already-installed hardware (Phase 4 provisioning).
