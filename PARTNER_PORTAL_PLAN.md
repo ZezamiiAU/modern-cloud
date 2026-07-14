@@ -1,218 +1,283 @@
 # Partner Portal — Implementation Plan
 
-> Status: **Plan** (scaffold merged; production not yet started)
-> Branch: `claude/partner-portal-role-vqyp17`
+> **Target repository:** `zezamii-daypass` (Azure DevOps, local `c:\dev\platform\zezamii-daypass`).
+> This plan is authored against that repo's structure (`@repo/db`, `@repo/api`,
+> `@repo/validators`, `@repo/ui`, `@app/cloud`, Vitest). It was drafted from a
+> GitHub-connected session that can only see `ZezamiiAU/modern-cloud`, so
+> package/role/tooling references below come from the daypass spec, and
+> **file-level paths must be confirmed in-repo during Phase 0**. A working
+> mock-backed scaffold was prototyped in `modern-cloud` and is a UX reference to
+> port, not the production target.
 
 ## Context
 
-We are adding a **partner** role to the cloud platform. A partner is a lock
-installer / reseller who services one or more customer organisations. They want
-a portal to see the locks they installed, device health, access activity, and
-partner-specific (co-branded) content.
+We are adding a **partner** capability to the cloud platform. A partner is a lock
+installer / reseller who services one or more customer organisations. They want a
+portal to see the locks they installed, device health, access activity, and
+partner-specific (co-branded) content. Some partners also need to administer the
+customer's **Spaces** constructs (not People).
 
-A scaffold already exists (mock-backed) to validate UX:
-
-- Contract stub: `packages/api/src/partner/types.ts` (exported from `@repo/api`)
-- Portal + gate: `apps/cloud/src/app/partner/*`, `apps/cloud/src/lib/partner/*`
-- Sidebar product: "Zezamii Partner" in `packages/ui/src/components/zezamii-sidebar.tsx`
-
-This document is the plan to take that scaffold to production.
-
-## Key design decisions (agreed)
+## Key design decisions
 
 1. **Per-org, not cross-org.** A partner logs in and **selects one org at a
    time** using the existing org switcher. There is **no aggregated "all orgs"
-   layer**. This deletes the hardest parts of earlier drafts: no `x-partner-id`
-   context, no cross-org aggregation views, no partner-scoped fan-out procedure.
-2. **`partner` is an org membership role.** Add `"partner"` to
-   `membershipRoleEnum`. A partner gets a normal `memberships` row (role
-   `partner`) in each org they service, so the existing `selected_org` cookie →
-   `x-org-id` → `orgProcedure` machinery handles all scoping with **zero new
-   backend plumbing**.
+   layer** — no `x-partner-id` context, no cross-org aggregation, no partner
+   fan-out procedure.
+2. **Two partner roles, both org membership roles.** Add both to
+   `membershipRoleEnum` (+ `chk_role`), so the existing `selected_org` →
+   `x-org-id` → `orgProcedure` machinery scopes them automatically:
+   - **`partner`** → *Installed devices only.* Sees only the locks it installed
+     (provenance-filtered) and their activity. No People.
+   - **`partner_spaces_admin`** → *Spaces admin, no People access.* Can manage
+     Spaces constructs across the selected org, but cannot manage People.
 3. **Identity is decoupled from access level.** "This user *is* a partner"
    (branding, resources) comes from a global `partner_memberships → partners`
-   link. "What they can see in org X" comes from the org `memberships.role`.
+   link. "What they can see/do in org X" comes from the org `memberships.role`.
    Branding/resources persist even if a customer changes their role in one org.
-4. **Least privilege, customer-elevated.** Default `partner` role = a narrow,
-   device-focused view. If a partner needs more, the **customer** changes that
-   partner's org membership role (`partner` → `viewer` / `global_user`), at
-   which point they drop into the normal cloud dashboard for that org. Note:
-   memberships are **one role per org** (`uq_user_org`), so elevation is a role
-   *change*, not a stacked second role. No new code — this is existing
-   role machinery.
-5. **Device scope: only the locks the partner installed.** Because a single org
-   **can be serviced by more than one partner** (confirmed), each partner must
-   see only *their* devices, not another partner's. This requires device→partner
-   provenance: an `installedByPartnerId` column on `device_refs`. Devices and
-   device-scoped activity are filtered to `installedByPartnerId = <partner>`.
-   (If a customer elevates the partner's org role to `viewer`/`global_user`,
-   they leave the partner view and see the whole org's normal dashboard — that
-   broader access is the customer's explicit grant.)
-6. **Frontend stays in `apps/cloud`.** Since a partner is a scoped org member
-   (not an external cross-org party), the separate-app rationale falls away. The
-   existing scaffold screens get wired to real per-org data.
-7. **Access is customer-granted.** A partner has access to an org **only if that
-   customer org grants their account** — partners never self-provision. The
-   grant is a normal `memberships` row (role `partner`) created by an org admin
-   through the existing member-invite flow (`memberships.invitedBy` /
-   `invitedAt` / `acceptedAt` already exist). An org can grant **more than one**
-   partner, and can revoke at any time (soft-delete the membership). The global
-   `partners` / `partner_memberships` entity only identifies *who a partner is*
-   and their brand; it grants **no** org access by itself.
+4. **Least privilege, customer-elevated.** Defaults are narrow. If a partner
+   needs more, the **customer** changes that partner's org membership role, at
+   which point they use the normal dashboard for that org. Memberships are
+   **one role per org** (`uq_user_org`), so elevation is a role *change*, not a
+   stacked role — no new code.
+5. **Device scope for `partner`: only the locks it installed.** A single org
+   **can be serviced by more than one partner**, so each partner must see only
+   *their* devices. Requires device→partner provenance:
+   `device_refs.installedByPartnerId`. Devices and device-scoped activity are
+   filtered to `installedByPartnerId = <partner>`. (`partner_spaces_admin`
+   manages Spaces org-wide by design — see decision 2 — a deliberately broader,
+   customer-granted role.)
+6. **Frontend stays in `@app/cloud`.** A partner is a scoped org member, not an
+   external cross-org party.
+7. **Access is customer-granted.** A partner sees an org **only if the customer
+   org grants their account** a `partner` / `partner_spaces_admin` membership,
+   via the existing member-invite flow (`memberships.invitedBy` / `invitedAt` /
+   `acceptedAt`). Orgs can grant multiple partners and revoke (soft-delete)
+   anytime. The global `partners` / `partner_memberships` entity grants **no**
+   org access by itself.
+
+## Access levels (explicit customer-facing copy)
+
+Make the difference unambiguous in every grant/role UI:
+
+| Role | Can | Cannot |
+| --- | --- | --- |
+| `partner` | View the **locks they installed** in this org, their health and access activity, and partner resources | See other partners' devices, People, Billing, Org Admin, or org-wide Spaces |
+| `partner_spaces_admin` | **Manage Spaces constructs** across this org (sites/buildings/floors/areas/devices — scope TBD) | **Manage People**, Billing, or Org Admin; it is not a generic org admin |
+
+Copy requirement: the `partner_spaces_admin` grant must state plainly that it
+can manage Spaces constructs across the selected org **but cannot manage
+People.**
+
+## Phase 0 — Preconditions & branch validation
+
+- Confirm the partner scaffold branch (if any) exists in daypass and is intended
+  to merge; validate it against current `main` before coding.
+- Confirm authoritative locations in daypass for: `membershipRoleEnum` + role
+  check constraint, `orgProcedure`/`adminProcedure`, the schema package
+  (`@repo/db` vs `@repo/api`), the view-application script, and the device
+  legacy API service.
+- Confirm the two-schema situation (`@repo/api` + `@repo/db`) and keep them in
+  sync throughout.
 
 ## Phase 1 — Schema & migration
 
-Follow the existing idiom in `packages/api/src/db/schema/orgs.ts` and
-`sites.ts`: TS string-literal enum tuples + a text column typed with
-`.$type<...>()` + a matching `check("chk_*", sql\`... IN (...)\`)` constraint;
-`chk_*_slug` regex checks; indexes via `index(...)` / `uniqueIndex(...)`; all
-tables declared as `coreSchema.table(...)`.
+- **Roles:** append `"partner"` and `"partner_spaces_admin"` to
+  `membershipRoleEnum` and the matching `chk_role` check constraint. Update all
+  `MembershipRole` consumers.
+- **New tables** (mirror existing `coreSchema` idiom: TS string-literal enums +
+  `.$type<...>()` + `check("chk_*", …)` + `index`/`uniqueIndex`):
+  - `partners` — `id`, `slug`, `name`, `logoUrl`, `brandColor`, `contactEmail`,
+    `tier`.
+  - `partner_memberships` — `userId → partnerId`, unique `(userId, partnerId)`.
+  - `partner_resources` — `title`, `description`, `category`, `url`,
+    `updatedAt`, `coBranded`, `partnerId`.
+- **Device provenance (required — decision 5):** add nullable
+  `device_refs.installedByPartnerId` FK (→ `partners.id`) + index on
+  `(orgRefId, installedByPartnerId)`; `ADD COLUMN IF NOT EXISTS`.
+- **Validators:** add/extend Zod schemas in `@repo/validators` for the new
+  roles, grant/revoke inputs, and partner entities.
+- **Views:** add `v_partner_memberships` (+ `v_partner_resources` if read via
+  views) using the confirmed view-application script.
+- **Migration:** author the migration in the repo's established style; keep
+  `@repo/api` and `@repo/db` aligned. All new constraints/views must be
+  **idempotent**.
 
-- **Add the role:** append `"partner"` to `membershipRoleEnum` and extend the
-  `chk_role` check constraint in `orgs.ts`. Update the `MembershipRole` type
-  consumers as needed.
-- **New tables** (`coreSchema`), exported from `db/schema/index.ts` and the
-  package `index.ts`:
-  - `partners` — brand identity: `id`, `slug`, `name`, `logoUrl`, `brandColor`,
-    `contactEmail`, `tier`. (Mirrors the `Partner` interface already in
-    `partner/types.ts`.)
-  - `partner_memberships` — `userId → partnerId` link (who logs in as this
-    partner). Unique on `(userId, partnerId)`.
-  - `partner_resources` — co-branded content: `title`, `description`,
-    `category`, `url`, `updatedAt`, `coBranded`, `partnerId`.
-- **Device provenance (required — see decision 5):** add a nullable
-  `installedByPartnerId` FK column to `device_refs` (→ `partners.id`) plus an
-  index on `(orgRefId, installedByPartnerId)`. This is an `ALTER TABLE` on an
-  existing ref table; use `ADD COLUMN IF NOT EXISTS` in the migration. Backfill
-  is a provisioning concern (Phase 4).
-- **Views:** add `v_partner_memberships` (partner + user join) and, if resources
-  are read via views, `v_partner_resources`, to the views SQL. The resolver
-  reads `public.v_*` views, never `core.*` tables directly (repo convention:
-  views are the stable, additive-only contract for tRPC).
-- **Migration:** hand-write `packages/api/drizzle/0004_add_partners.sql` in the
-  existing `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD ... IF NOT EXISTS`
-  style, plus the view definitions. Apply with `pnpm db:push && pnpm db:views`
-  from `packages/api` (note: `_journal.json` only tracks `0000`; later
-  migrations are applied out-of-band via push, matching current practice).
+## Phase 2 — Backend procedures & portal wiring
 
-Files: `packages/api/src/db/schema/orgs.ts`,
-`packages/api/src/db/schema/partners.ts` (new),
-`packages/api/src/db/schema/index.ts`, `packages/api/src/index.ts`,
-`packages/api/drizzle/0004_add_partners.sql` (new), views SQL.
-
-## Phase 2 — Portal wiring (real data)
-
-- **Partner router:** add `partnerRouter` in `packages/api/src/router/` and mount
-  it in `router/index.ts` (currently `health, public, daypass, events, legacy,
-  admin`). Use the existing **`orgProcedure`** (no new middleware) so everything
-  is auto-scoped to the selected org:
-  - `getContext` — the signed-in user's partner identity + branding.
-  - `listDevices` — devices in the current org **filtered to
-    `installedByPartnerId = <this partner>`** (joined to live health — Phase 3).
+- **Procedures:**
+  - Reuse `orgProcedure` for `partner` reads (auto org-scoped), filtered to
+    `installedByPartnerId = <this partner>`.
+  - Add a **`spacesAdminProcedure`** authorizing Spaces mutations for
+    `{ owner, global_admin, partner_spaces_admin }`; People/Billing/Org-Admin
+    mutations stay restricted to `{ owner, global_admin }`. `partner_spaces_admin`
+    must never reach People management.
+- **Partner router** (`partnerRouter`, mounted in the root router):
+  - `getContext` — partner identity + branding for the signed-in user.
+  - `listDevices` — org devices filtered to this partner; joined to live health
+    (Phase 3).
   - `listActivity` — access events for **this partner's devices in the current
-    org**. Source note: `audit_log` is org-scoped with no device/site column, so
-    filter its rows by `resourceType = 'device'` + `resourceId IN (<partner's
-    device ids>)`; validate coverage, and fall back to device/pass events
-    (which carry device + `site_ref_id`) if `audit_log` doesn't record every
-    unlock. Showing *all* org activity is not acceptable here — it would leak a
-    co-servicing partner's events.
+    org only** (never org-wide — that would leak a co-servicing partner's
+    events). Confirm the authoritative event source in Phase 0 (see Remaining
+    Decisions).
   - `listResources` — `partner_resources` for the user's partner.
-- **Swap the gate:** replace the mock in `apps/cloud/src/lib/partner/context.ts`
-  (`isPartnerUser`, `getPartnerContext`) so the portal renders when the selected
-  org's `membership.role === "partner"`; resolve branding/resources from the
-  partner identity. Delete reliance on `apps/cloud/src/lib/partner/mock-data.ts`.
-- **Server-side role check:** render partner pages based on the resolved role —
-  do not rely on nav visibility alone.
+- **Gate:** replace the scaffold mock so the portal renders based on the
+  resolved role (`partner` / `partner_spaces_admin`); server-side role checks,
+  not nav visibility alone.
+- **Port the scaffold screens** from the `modern-cloud` prototype into
+  `@app/cloud` and wire them to the tRPC queries above.
 
-Files: `packages/api/src/router/partner.ts` (new),
-`packages/api/src/router/index.ts`, `apps/cloud/src/lib/partner/context.ts`,
-`apps/cloud/src/app/partner/*` (swap mock imports for tRPC queries).
+## Phase 3 — Device health source (on-demand fetch)
 
-## Phase 3 — Device health source
+`device_refs` carries identity only; health/battery/firmware/last-seen live in
+the device platform / legacy MSSQL.
 
-`device_refs` has **no telemetry** (`externalDeviceId`, `slug`, `deviceType`,
-`displayName` only). Health / battery / firmware / last-seen live in the device
-platform / legacy MSSQL.
+**Decision: on-demand fetch.** `listDevices` calls the legacy device API and
+merges live health onto the partner's rows. Notes:
 
-**Decision: on-demand fetch (A).** `listDevices` calls the legacy device API via
-`packages/api/src/services/legacy-api.ts` and merges live health onto the
-partner's `device_refs` rows — no new storage, always fresh. Implementation
-notes:
-
-- **Batch** the lookup (one call for the partner's device set), don't fetch
-  per-device, to keep portal loads fast.
-- **Short-TTL cache / graceful degradation:** if the legacy API is slow or down,
-  render devices with an "unknown / last-known" health state rather than failing
-  the whole page.
-- Revisit a synced `device_health` table later only if latency or legacy-API
-  availability becomes a real problem.
+- **Batch** the lookup for the partner's device set (no per-device calls).
+- **Short-TTL cache + graceful degradation:** on legacy-API slowness/outage,
+  render "unknown / last-known" health rather than failing the page.
+- Revisit a synced `device_health` table only if latency/availability bites.
 
 ## Phase 4 — Provisioning & granting access
 
-Two distinct steps, by two distinct actors:
+Two actors, two steps:
 
-1. **Register the partner (internal / Zezamii admin).** Create the `partners`
-   brand row and link the partner's user accounts via `partner_memberships`.
-   This establishes identity + branding only — it grants no org access.
-2. **Grant access (customer org admin).** An `owner`/`global_admin` of the
-   customer org invites the partner's account with role `partner`, using the
-   **existing member-invite flow** (`memberships.invitedBy` / `invitedAt` /
-   `acceptedAt`). This is the *only* thing that gives a partner visibility into
-   an org. An org can grant multiple partners; revoking is a soft-delete of the
-   membership (`memberships.deletedAt`).
+1. **Register partner identity (internal / Zezamii admin).** Create the
+   `partners` row and link users via `partner_memberships`. Identity + branding
+   only — no org access.
+2. **Grant access (customer org admin).** An `owner`/`global_admin` grants a
+   partner account a `partner` or `partner_spaces_admin` membership via the
+   existing invite flow. Revoke = soft-delete (`memberships.deletedAt`).
 
-   This requires a customer-facing **"grant partner" surface**. The logic is a
-   single set of `adminProcedure` mutations (org-scoped, admin-only), surfaced
-   in **more than one place** in the UI — same backend, different entry points:
-   - `grantPartner` (create/re-activate a role-`partner` membership for a
-     partner account, by email/partner lookup), `revokePartner` (soft-delete),
-     `listGrantedPartners` (current grants for the org). Gate all to
-     `owner` / `global_admin`.
-   - A small shared client component (e.g. `<GrantedPartners />` in `@repo/ui`
-     or `apps/cloud`) rendering the list + add/revoke + partner brand, reused by
-     each surface below so there's no duplicated logic:
-     - **Access product** — under `Zezamii Access`, the natural home for "who
-       has access." Wire it into `/access/permissions` (currently a
-       Coming-Soon placeholder) or an Access Settings tab.
-     - **Admin section** — a `/admin/partners` route + sidebar entry in
-       `zezamii-sidebar.tsx`'s Admin global section, for org-level
-       administration.
-   - Both entry points call the same mutations; adding a third surface later is
-     just mounting the shared component.
+**Grant surface (the "grant partner" setting).** One set of admin-only
+mutations, surfaced in **more than one place** via a shared client component
+(no duplicated logic):
 
-Supporting data:
+- Mutations (gate to `owner`/`global_admin`): `grantPartner`, `revokePartner`,
+  `listGrantedPartners`.
+- Shared `<GrantedPartners />` component (list + add/revoke + partner brand + a
+  role selector for `partner` vs `partner_spaces_admin`), mounted in:
+  - **Access product** (`Zezamii Access`) — the natural "who has access" home
+    (e.g. Permissions / Access Settings).
+  - **Admin section** — a partners route + sidebar entry.
 
-- **Device provenance backfill** — populate `device_refs.installedByPartnerId`
-  for hardware a partner installed, so its devices/activity filter correctly.
-  Tie this to the install/commissioning record where possible.
+## Phase 5 — Device provenance backfill
 
-Elevation ("give this partner more than the device view") needs **no new
-code** — the customer changes the partner's org membership role
-(`partner` → `viewer` / `global_user`) through existing role management.
+- Define the source of truth for historical installs before production launch.
+- Prefer commissioning/install records where available.
+- For unknown historical devices, leave `installedByPartnerId` null until
+  verified; **null must not be visible to any partner.**
+- Produce an auditable backfill script/report listing:
+  - org
+  - device ref
+  - external device ID
+  - assigned partner
+  - confidence/source
+  - unresolved rows
 
-## Verification
+**Exit criteria:**
 
-- **Phase 1:** `cd packages/api && pnpm db:push && pnpm db:views`; confirm tables
-  + views in `pnpm db:studio`.
-- **Phase 2:** assert a `partner`-role membership renders the portal and a
-  non-partner role does not; confirm `orgProcedure` scopes every read to the
-  selected org. `MOCK_AUTH=1 next build` in `apps/cloud` stays green (already
-  verified for the scaffold).
-- **Phase 3–4:** seed a partner + memberships; drive the portal end-to-end for a
-  selected org and confirm devices / activity / resources render from real data.
+- Internal admins can register partner identity.
+- Customer admins can grant/revoke partner org access.
+- Partner portal returns zero devices until provenance is populated.
+- Backfill report exists for existing hardware.
 
-## Resolved decisions
+## Phase 6 — Verification
 
-1. **Device health source → on-demand fetch** from the legacy device API
-   (Phase 3, option A), batched with graceful degradation.
-2. **Multi-partner orgs → yes.** A single org can be serviced by more than one
-   partner, so `device_refs.installedByPartnerId` provenance is **required**
-   (decision 5); devices and activity are filtered to the partner's own locks.
+Run targeted checks before broad build checks.
 
-## Remaining unknowns (validate during implementation)
+Suggested commands from `c:\dev\platform\zezamii-daypass`:
 
-- **`audit_log` coverage** — confirm unlock/denied events are recorded with
-  `resourceType = 'device'` + `resourceId`; if not, source activity from
-  device/pass events instead (Phase 2, `listActivity`).
-- **Backfill** — how existing `device_refs` get their `installedByPartnerId`
-  populated for already-installed hardware (Phase 4 provisioning).
+- `pnpm --filter @repo/db type-check`
+- `pnpm --filter @repo/api type-check`
+- `pnpm --filter @repo/validators type-check`
+- `pnpm --filter @repo/ui type-check`
+- `pnpm --filter @app/cloud type-check`
+- `pnpm --filter @app/cloud build`
+- `pnpm test:run` or targeted Vitest suites if the full suite is too slow
+
+DB verification:
+
+- Apply migration to a disposable DB.
+- Apply views using the confirmed view command.
+- Inspect tables/views in Drizzle Studio or Supabase.
+- Seed:
+  - two partners
+  - one org with both partners granted
+  - devices split across both partners
+  - one unassigned device
+  - activity for all three device groups
+
+Security test matrix:
+
+| User | Selected org role | Partner identity | Expected result |
+| --- | --- | --- | --- |
+| Partner A | `partner` | Partner A | Sees only A devices/activity |
+| Partner B | `partner` | Partner B | Sees only B devices/activity |
+| Partner A | `partner_spaces_admin` | Partner A | Can administer Spaces constructs for selected org |
+| Partner A | no membership | Partner A | Forbidden/no org data |
+| Normal user | `viewer` | none | No partner portal |
+| Org admin | `global_admin` | none | Can grant/revoke partners |
+| Org admin | `operator` | none | Cannot grant/revoke partners |
+| Partner spaces admin | `partner_spaces_admin` | Partner A | Cannot manage People/Billing/Org Admin |
+| Partner user elevated | `viewer` | Partner A | Normal dashboard behavior, not narrow partner portal |
+
+Acceptance criteria:
+
+- No partner can access another partner's devices in the same org.
+- No partner can access org-wide activity through partner endpoints.
+- `partner_spaces_admin` can manage Spaces constructs without becoming a generic
+  org admin.
+- `partner_spaces_admin` cannot access People management.
+- Soft-deleted partner memberships and org memberships are ignored.
+- All new DB constraints and views are idempotent in migration.
+- Partner pages are usable with empty state, legacy API failure, and real data.
+
+## Rollout Plan
+
+1. Ship schema and views behind no visible UI.
+2. Register one internal/test partner identity.
+3. Backfill a small pilot org's device provenance.
+4. Enable partner role grant for internal/admin users only.
+5. Pilot with one customer org and one partner.
+6. Validate logs for forbidden access, legacy API latency, and empty device
+   surprises.
+7. Enable customer-facing grant UI.
+8. Expand partner by partner.
+
+## Rollback Plan
+
+- Hide/remove partner sidebar entry and `/partner` route access.
+- Disable grant partner UI while leaving schema in place.
+- Stop assigning `installedByPartnerId` for new devices.
+- Soft-delete problematic `memberships` rows with role `partner`.
+- Keep partner tables and nullable device provenance columns; avoid destructive
+  rollback unless a migration has not reached shared environments.
+
+## Risks and Mitigations
+
+| Risk | Mitigation |
+| --- | --- |
+| Scaffold branch differs from current repo | Phase 0 requires branch validation before coding. |
+| Two schema packages drift | Update `@repo/api` and `@repo/db` together; type-check both. |
+| `partner` leaks into normal role hierarchy | Treat `partner` / `partner_spaces_admin` as special roles in UI/nav checks. |
+| Activity source lacks device IDs | Validate coverage early; switch to unlock/pass event source if needed. |
+| Legacy API latency hurts portal | Batch calls, timeout, short TTL cache, graceful unknown state. |
+| Historical device ownership is unclear | Null provenance shows no partner; backfill only verified rows. |
+| Existing billing partner model causes confusion | Keep portal identity separate unless a later ADR merges concepts. |
+| Existing public procedures bypass role intent | Audit Spaces/People reads and move sensitive org data behind explicit org-scoped procedures. |
+
+## Remaining Decisions
+
+- Is the scaffold branch available and intended to be merged?
+- Which file is the authoritative view-application script in this repo?
+- Should partner identity allow one user to belong to multiple partner
+  organisations at launch, or should that be blocked until a switcher exists?
+- What exactly counts as a "Spaces construct" for `partner_spaces_admin`:
+  sites/buildings/floors/areas/devices only, or also bookings, booking
+  resources, cloud keys, capture forms, QR codes, monitoring, and backup codes?
+- What is the authoritative historical install/commissioning source for device
+  provenance backfill?
+- Which event table is authoritative for unlock/denied activity in the partner
+  portal?
