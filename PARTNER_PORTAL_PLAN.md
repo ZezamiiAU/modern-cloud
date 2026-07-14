@@ -161,18 +161,24 @@ Two distinct steps, by two distinct actors:
    an org. An org can grant multiple partners; revoking is a soft-delete of the
    membership (`memberships.deletedAt`).
 
-   This requires a **customer-facing "Partners" admin screen** (the "grant
-   partner" setting):
-   - New route in `apps/cloud` under the Admin section, e.g.
-     `/admin/partners`, plus a sidebar entry in `zezamii-sidebar.tsx`'s Admin
-     global section. Gate the page to `owner` / `global_admin`.
-   - Backed by `adminProcedure` mutations (org-scoped, admin-only):
-     `grantPartner` (create/re-activate a role-`partner` membership for a
-     partner account, by email/partner lookup), `revokePartner`
-     (soft-delete), and `listGrantedPartners` (current grants for the org).
-   - The screen lists granted partners, supports add/revoke, and shows the
-     partner's brand (from the `partners` entity). This is the org's control
-     surface over who can see their locks.
+   This requires a customer-facing **"grant partner" surface**. The logic is a
+   single set of `adminProcedure` mutations (org-scoped, admin-only), surfaced
+   in **more than one place** in the UI — same backend, different entry points:
+   - `grantPartner` (create/re-activate a role-`partner` membership for a
+     partner account, by email/partner lookup), `revokePartner` (soft-delete),
+     `listGrantedPartners` (current grants for the org). Gate all to
+     `owner` / `global_admin`.
+   - A small shared client component (e.g. `<GrantedPartners />` in `@repo/ui`
+     or `apps/cloud`) rendering the list + add/revoke + partner brand, reused by
+     each surface below so there's no duplicated logic:
+     - **Access product** — under `Zezamii Access`, the natural home for "who
+       has access." Wire it into `/access/permissions` (currently a
+       Coming-Soon placeholder) or an Access Settings tab.
+     - **Admin section** — a `/admin/partners` route + sidebar entry in
+       `zezamii-sidebar.tsx`'s Admin global section, for org-level
+       administration.
+   - Both entry points call the same mutations; adding a third surface later is
+     just mounting the shared component.
 
 Supporting data:
 
