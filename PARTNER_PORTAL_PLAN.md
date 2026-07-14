@@ -51,6 +51,14 @@ This document is the plan to take that scaffold to production.
 6. **Frontend stays in `apps/cloud`.** Since a partner is a scoped org member
    (not an external cross-org party), the separate-app rationale falls away. The
    existing scaffold screens get wired to real per-org data.
+7. **Access is customer-granted.** A partner has access to an org **only if that
+   customer org grants their account** — partners never self-provision. The
+   grant is a normal `memberships` row (role `partner`) created by an org admin
+   through the existing member-invite flow (`memberships.invitedBy` /
+   `invitedAt` / `acceptedAt` already exist). An org can grant **more than one**
+   partner, and can revoke at any time (soft-delete the membership). The global
+   `partners` / `partner_memberships` entity only identifies *who a partner is*
+   and their brand; it grants **no** org access by itself.
 
 ## Phase 1 — Schema & migration
 
@@ -139,17 +147,42 @@ notes:
 - Revisit a synced `device_health` table later only if latency or legacy-API
   availability becomes a real problem.
 
-## Phase 4 — Provisioning
+## Phase 4 — Provisioning & granting access
 
-Internal-admin flow (tRPC first, UI later) to:
+Two distinct steps, by two distinct actors:
 
-- create a `partners` row,
-- link users via `partner_memberships`,
-- grant `partner` `memberships` rows in each org the partner services.
+1. **Register the partner (internal / Zezamii admin).** Create the `partners`
+   brand row and link the partner's user accounts via `partner_memberships`.
+   This establishes identity + branding only — it grants no org access.
+2. **Grant access (customer org admin).** An `owner`/`global_admin` of the
+   customer org invites the partner's account with role `partner`, using the
+   **existing member-invite flow** (`memberships.invitedBy` / `invitedAt` /
+   `acceptedAt`). This is the *only* thing that gives a partner visibility into
+   an org. An org can grant multiple partners; revoking is a soft-delete of the
+   membership (`memberships.deletedAt`).
 
-Elevation ("give this partner full access to my org") needs **no new code** —
-the customer changes the partner's org membership role through existing role
-management.
+   This requires a **customer-facing "Partners" admin screen** (the "grant
+   partner" setting):
+   - New route in `apps/cloud` under the Admin section, e.g.
+     `/admin/partners`, plus a sidebar entry in `zezamii-sidebar.tsx`'s Admin
+     global section. Gate the page to `owner` / `global_admin`.
+   - Backed by `adminProcedure` mutations (org-scoped, admin-only):
+     `grantPartner` (create/re-activate a role-`partner` membership for a
+     partner account, by email/partner lookup), `revokePartner`
+     (soft-delete), and `listGrantedPartners` (current grants for the org).
+   - The screen lists granted partners, supports add/revoke, and shows the
+     partner's brand (from the `partners` entity). This is the org's control
+     surface over who can see their locks.
+
+Supporting data:
+
+- **Device provenance backfill** — populate `device_refs.installedByPartnerId`
+  for hardware a partner installed, so its devices/activity filter correctly.
+  Tie this to the install/commissioning record where possible.
+
+Elevation ("give this partner more than the device view") needs **no new
+code** — the customer changes the partner's org membership role
+(`partner` → `viewer` / `global_user`) through existing role management.
 
 ## Verification
 
