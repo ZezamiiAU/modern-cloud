@@ -43,6 +43,10 @@ import {
   MapPin,
   Layers,
   Radar,
+  LayoutDashboard,
+  Lock,
+  Activity,
+  BookOpen,
 } from "lucide-react";
 import {
   CloudIcon,
@@ -51,6 +55,7 @@ import {
   RoomsIcon,
   BookingsIcon,
   VisionIcon,
+  PartnerIcon,
 } from "./product-icons";
 
 // Product definitions
@@ -60,7 +65,8 @@ type ProductSlug =
   | "lockers"
   | "rooms"
   | "bookings"
-  | "vision";
+  | "vision"
+  | "partner";
 
 interface Product {
   slug: ProductSlug;
@@ -112,6 +118,13 @@ const PRODUCTS: Product[] = [
     icon: VisionIcon,
     color: "text-purple-400",
     defaultRoute: "/vision/feeds",
+  },
+  {
+    slug: "partner",
+    name: "Zezamii Partner",
+    icon: PartnerIcon,
+    color: "text-sky-500",
+    defaultRoute: "/partner",
   },
 ];
 
@@ -167,6 +180,12 @@ const PRODUCT_NAV: Record<ProductSlug, NavItem[]> = {
   vision: [
     { label: "Live Feeds", href: "/vision/feeds", icon: Video },
     { label: "AI Alerts", href: "/vision/alerts", icon: Bell },
+  ],
+  partner: [
+    { label: "Overview", href: "/partner", icon: LayoutDashboard },
+    { label: "Locks & Devices", href: "/partner/devices", icon: Lock },
+    { label: "Access Activity", href: "/partner/activity", icon: Activity },
+    { label: "Resources", href: "/partner/resources", icon: BookOpen },
   ],
 };
 
@@ -236,6 +255,7 @@ function detectProduct(pathname: string): ProductSlug {
   if (pathname.startsWith("/rooms")) return "rooms";
   if (pathname.startsWith("/bookings")) return "bookings";
   if (pathname.startsWith("/vision")) return "vision";
+  if (pathname.startsWith("/partner")) return "partner";
   return "cloud";
 }
 
@@ -254,6 +274,7 @@ function getProductAccentClass(product: ProductSlug): string {
     rooms: "border-orange-500 shadow-orange-500/50",
     bookings: "border-indigo-500 shadow-indigo-500/50",
     vision: "border-purple-500 shadow-purple-500/50",
+    partner: "border-sky-500 shadow-sky-500/50",
   };
   return colorMap[product] || "border-gray-500 shadow-gray-500/50";
 }
@@ -267,7 +288,10 @@ export interface ZezamiiSidebarProps {
   onLogout?: () => void;
 }
 
-export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({ user, onLogout }: ZezamiiSidebarProps) {
+export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({
+  user,
+  onLogout,
+}: ZezamiiSidebarProps) {
   const [collapsed, setCollapsed] = React.useState(false);
   const [productDropdownOpen, setProductDropdownOpen] = React.useState(false);
   const [userMenuOpen, setUserMenuOpen] = React.useState(false);
@@ -284,10 +308,13 @@ export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({ user, onLogou
   const pathname = usePathname();
 
   // Memoize computed values to prevent recalculation on every render
-  const currentProduct = React.useMemo(() => detectProduct(pathname), [pathname]);
+  const currentProduct = React.useMemo(
+    () => detectProduct(pathname),
+    [pathname],
+  );
   const currentProductConfig = React.useMemo(
     () => PRODUCTS.find((p) => p.slug === currentProduct),
-    [currentProduct]
+    [currentProduct],
   );
   const productNavItems = PRODUCT_NAV[currentProduct];
   const productSettings = PRODUCT_SETTINGS[currentProduct];
@@ -328,7 +355,7 @@ export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({ user, onLogou
   // Memoize accent class
   const productAccentClass = React.useMemo(
     () => getProductAccentClass(currentProduct),
-    [currentProduct]
+    [currentProduct],
   );
 
   return (
@@ -443,14 +470,18 @@ export const ZezamiiSidebar = React.memo(function ZezamiiSidebar({ user, onLogou
                     "w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors",
                     expandedSections[section.title]
                       ? "text-white"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                      : "text-slate-300 hover:bg-slate-800 hover:text-white",
                   )}
                 >
                   {SectionIcon && (
                     <SectionIcon className="w-4 h-4 text-slate-400 shrink-0" />
                   )}
-                  <span className="flex-1 text-left font-medium">{section.title}</span>
-                  <span className="text-xs text-slate-500 mr-1">{section.items.length}</span>
+                  <span className="flex-1 text-left font-medium">
+                    {section.title}
+                  </span>
+                  <span className="text-xs text-slate-500 mr-1">
+                    {section.items.length}
+                  </span>
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 text-slate-400 transition-transform",
@@ -555,7 +586,7 @@ interface NavItemComponentProps {
 // Custom comparison - only re-render if active state changes or other props change
 function navItemPropsAreEqual(
   prevProps: NavItemComponentProps,
-  nextProps: NavItemComponentProps
+  nextProps: NavItemComponentProps,
 ): boolean {
   // Check if collapsed or product changed
   if (prevProps.collapsed !== nextProps.collapsed) return false;
@@ -570,10 +601,10 @@ function navItemPropsAreEqual(
 
   // Check if any child's active state changed
   const prevChildActive = prevProps.item.children?.some(
-    (child) => prevProps.pathname === child.href
+    (child) => prevProps.pathname === child.href,
   );
   const nextChildActive = nextProps.item.children?.some(
-    (child) => nextProps.pathname === child.href
+    (child) => nextProps.pathname === child.href,
   );
   if (prevChildActive !== nextChildActive) return false;
 
@@ -593,11 +624,15 @@ const NavItemComponent = React.memo(function NavItemComponent({
   const isActive = pathname === item.href;
   const hasChildren = item.children && item.children.length > 0;
   const isChildActive = React.useMemo(
-    () => hasChildren && item.children?.some((child) => pathname === child.href),
-    [hasChildren, item.children, pathname]
+    () =>
+      hasChildren && item.children?.some((child) => pathname === child.href),
+    [hasChildren, item.children, pathname],
   );
   const IconComponent = item.icon;
-  const productColor = React.useMemo(() => getProductColorClass(product), [product]);
+  const productColor = React.useMemo(
+    () => getProductColorClass(product),
+    [product],
+  );
 
   // Memoize toggle handler
   const toggleExpanded = React.useCallback(() => {

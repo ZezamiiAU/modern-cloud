@@ -125,3 +125,19 @@ export {
   createPublicContext,
   type CreateContextOptions,
 } from "./context";
+
+// Partner domain (cross-org entity model — contract stub, not yet migrated)
+export {
+  PARTNER_ROLE,
+  type PartnerRole,
+  type PartnerTier,
+  type DeviceHealth,
+  type AccessOutcome,
+  type PartnerResourceCategory,
+  type Partner,
+  type PartnerInstallation,
+  type PartnerDevice,
+  type PartnerAccessEvent,
+  type PartnerResource,
+  type PartnerContext,
+} from "./partner/types";
